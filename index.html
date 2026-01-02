@@ -3,324 +3,315 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pink Ultra - Infinite Canvas</title>
+    <title>Pink Ultra - Fluid Workspace</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
-            --dark-bg: #0f0c29;
-            --gradient: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            --bg: #0b0b1a;
             --pink: #ff00ff;
-            --cyan: #00d2ff;
-            --glass: rgba(255, 255, 255, 0.05);
-            --panel-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
+            --blue: #00d2ff;
+            --panel: rgba(15, 15, 35, 0.85);
         }
 
-        * { box-sizing: border-box; }
+        * { box-sizing: border-box; outline: none; }
         body, html { 
             margin: 0; padding: 0; width: 100%; height: 100%; 
-            background: var(--dark-bg); color: white;
-            font-family: 'Segoe UI', system-ui, sans-serif;
-            overflow: hidden;
+            background: var(--bg); color: white;
+            font-family: 'Inter', sans-serif; overflow: hidden;
         }
 
-        /* El Lienzo Infinito */
-        #master-container {
+        /* Contenedor de la Pizarra */
+        #viewport {
             width: 100vw; height: 100vh;
-            background: var(--gradient);
-            position: relative;
             cursor: grab;
-            overflow: hidden;
+            perspective: 1000px;
+            background: radial-gradient(circle at center, #1a1a3a 0%, #0b0b1a 100%);
         }
 
-        #infinite-canvas {
+        #canvas-wrapper {
             position: absolute;
-            width: 5000px; height: 5000px;
-            top: -2000px; left: -2000px;
-            transform-origin: center;
+            width: 10000px; height: 10000px;
+            top: 0; left: 0;
+            transform-origin: 0 0;
+            will-change: transform; /* Optimización de rendimiento */
         }
 
-        /* Cuadrícula de fondo */
-        .grid-bg {
+        /* Cuadrícula infinita */
+        .grid {
             position: absolute; inset: 0;
-            background-image: radial-gradient(rgba(255, 0, 255, 0.1) 1px, transparent 1px);
-            background-size: 40px 40px;
+            background-image: 
+                linear-gradient(to right, rgba(255,255,255,0.03) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255,255,255,0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
             pointer-events: none;
         }
 
-        /* Paneles de Herramientas */
-        .ui-panel {
-            position: fixed; background: rgba(15, 12, 41, 0.8);
-            backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 16px; box-shadow: var(--panel-shadow); z-index: 1000;
-            padding: 10px; display: flex; gap: 8px;
+        /* Herramientas Flotantes */
+        .ui-dock {
+            position: fixed; bottom: 30px; left: 50%;
+            transform: translateX(-50%);
+            background: var(--panel);
+            backdrop-filter: blur(20px);
+            padding: 12px 25px;
+            border-radius: 25px;
+            border: 1px solid rgba(255,255,255,0.1);
+            display: flex; gap: 15px; align-items: center;
+            z-index: 1000;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
         }
 
-        .toolbar-left { left: 20px; top: 50%; transform: translateY(-50%); flex-direction: column; }
-        .toolbar-top { top: 20px; left: 50%; transform: translateX(-50%); align-items: center; padding: 10px 20px; }
-
-        .btn {
-            width: 45px; height: 45px; border-radius: 10px; border: none;
-            background: transparent; color: #fff; cursor: pointer;
-            transition: 0.2s; display: flex; align-items: center; justify-content: center;
-            font-size: 1.2rem;
+        .tool-btn {
+            background: none; border: none; color: white;
+            font-size: 1.3rem; cursor: pointer; transition: 0.2s;
+            width: 45px; height: 45px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
         }
-        .btn:hover { background: var(--pink); color: #000; box-shadow: 0 0 15px var(--pink); }
-        .btn.active { background: var(--cyan); color: #000; }
+        .tool-btn:hover { background: var(--pink); color: black; transform: translateY(-5px); }
+        .tool-btn.active { background: var(--blue); color: black; }
 
-        /* Elementos: Notas, Nodos, Imagenes */
+        /* Elementos (Notas/Nodos) */
         .element {
-            position: absolute; min-width: 180px; min-height: 120px;
-            border-radius: 12px; cursor: move; display: flex; flex-direction: column;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1);
-            background: rgba(255,255,255,0.05); backdrop-filter: blur(5px);
-            resize: both; overflow: hidden; padding: 10px;
+            position: absolute; min-width: 200px; min-height: 150px;
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            cursor: move;
+            display: flex; flex-direction: column;
+            resize: both; overflow: hidden;
+            will-change: top, left;
         }
 
-        .note-pro { background: #fff3a0; color: #333; border: none; }
-        .node-pro { 
-            background: linear-gradient(45deg, #7b2ff7, #f107a3); 
-            border: 2px solid #fff; border-radius: 50px; text-align: center;
-        }
+        .element.note { background: rgba(255, 240, 100, 0.9); color: #222; border: none; }
+        .element.node { border: 2px solid var(--pink); border-radius: 50px; background: rgba(255,0,255,0.1); }
 
-        .content-area { 
-            flex-grow: 1; outline: none; padding: 10px; 
-            font-weight: 500; display: flex; align-items: center; justify-content: center;
-        }
+        .el-header { padding: 8px; display: flex; justify-content: flex-end; gap: 8px; opacity: 0; transition: 0.3s; }
+        .element:hover .el-header { opacity: 1; }
+        .el-content { flex-grow: 1; padding: 15px; text-align: center; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 1.1rem; }
 
-        /* SVG para Conexiones */
+        /* SVG para Flechas */
         #svg-layer { position: absolute; inset: 0; pointer-events: none; z-index: 1; }
-
-        /* Canvas de dibujo */
-        #draw-layer { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
-        #draw-layer.active { pointer-events: all; }
-
-        /* Branding */
-        .brand { font-weight: bold; color: var(--pink); margin-right: 15px; letter-spacing: 2px; }
-
+        canvas#draw-layer { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
+        canvas#draw-layer.active { pointer-events: all; cursor: crosshair; }
     </style>
 </head>
 <body>
 
-    <div class="ui-panel toolbar-top">
-        <div class="brand">PINK ULTRA</div>
-        <button class="btn" onclick="addNote()" title="Nota Adhesiva"><i class="fas fa-sticky-note"></i></button>
-        <button class="btn" onclick="addNode()" title="Nodo de Esquema"><i class="fas fa-circle-nodes"></i></button>
-        <button class="btn" onclick="document.getElementById('file-input').click()" title="Subir Imagen"><i class="fas fa-image"></i></button>
-        <div style="width:2px; height:30px; background:rgba(255,255,255,0.1); margin: 0 10px;"></div>
-        <button class="btn" onclick="setTool('pan')" id="btn-pan" title="Mover Pizarra"><i class="fas fa-hand-paper"></i></button>
-        <button class="btn" onclick="setTool('draw')" id="btn-draw" title="Dibujar"><i class="fas fa-pen"></i></button>
-        <button class="btn" onclick="clearAll()" title="Limpiar"><i class="fas fa-eraser"></i></button>
-        <button class="btn" onclick="exportImage()" title="Exportar"><i class="fas fa-download"></i></button>
+    <div class="ui-dock">
+        <h2 style="font-size: 1rem; color: var(--pink); margin: 0 15px 0 0; letter-spacing: 2px;">PINK</h2>
+        <button class="tool-btn" onclick="addNote()"><i class="fas fa-sticky-note"></i></button>
+        <button class="tool-btn" onclick="addNode()"><i class="fas fa-project-diagram"></i></button>
+        <button class="tool-btn" onclick="document.getElementById('img-up').click()"><i class="fas fa-image"></i></button>
+        <button class="tool-btn" id="draw-toggle" onclick="toggleDraw()"><i class="fas fa-pen-nib"></i></button>
+        <input type="color" id="picker" value="#ff00ff" style="width:30px; border:none; background:none; cursor:pointer;">
+        <button class="tool-btn" onclick="clearBoard()"><i class="fas fa-trash-alt"></i></button>
     </div>
 
-    <div class="ui-panel toolbar-left">
-        <input type="color" id="mainColor" value="#ff00ff" style="width:40px; height:40px; border:none; background:none; cursor:pointer;">
-        <input type="range" id="penSize" min="1" max="20" value="5" title="Grosor">
-        <button class="btn" onclick="zoomIn()"><i class="fas fa-search-plus"></i></button>
-        <button class="btn" onclick="zoomOut()"><i class="fas fa-search-minus"></i></button>
-    </div>
+    <input type="file" id="img-up" hidden accept="image/*">
 
-    <input type="file" id="file-input" style="display:none" accept="image/*">
-
-    <div id="master-container">
-        <div id="infinite-canvas">
-            <div class="grid-bg"></div>
+    <div id="viewport">
+        <div id="canvas-wrapper">
+            <div class="grid"></div>
             <svg id="svg-layer"></svg>
             <canvas id="draw-layer"></canvas>
-            </div>
+        </div>
     </div>
 
     <script>
-        const canvas = document.getElementById('draw-layer');
-        const ctx = canvas.getContext('2d');
-        const infiniteCanvas = document.getElementById('infinite-canvas');
-        const master = document.getElementById('master-container');
-        const svgLayer = document.getElementById('svg-layer');
-        
+        const viewport = document.getElementById('viewport');
+        const wrapper = document.getElementById('canvas-wrapper');
+        const drawCanvas = document.getElementById('draw-layer');
+        const ctx = drawCanvas.getContext('2d');
+        const svg = document.getElementById('svg-layer');
+
         let scale = 1;
+        let posX = -4000, posY = -4000; // Centrar inicialmente
         let isPanning = false;
         let isDrawing = false;
-        let currentTool = 'pan'; 
-        let startX, startY;
+        let canDraw = false;
         let connections = [];
 
-        // Inicializar tamaño del lienzo de dibujo
+        // Inicialización
         function init() {
-            canvas.width = 5000;
-            canvas.height = 5000;
-            svgLayer.setAttribute('viewBox', '0 0 5000 5000');
+            drawCanvas.width = 10000;
+            drawCanvas.height = 10000;
+            updateTransform();
         }
-        init();
 
-        // Herramientas
-        function setTool(tool) {
-            currentTool = tool;
-            document.querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
-            document.getElementById('btn-' + tool).classList.add('active');
+        // --- ZOOM CON LA RUEDA (MOUSE WHEEL) ---
+        viewport.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const delta = -e.deltaY;
+            const factor = delta > 0 ? 1.1 : 0.9;
             
-            if(tool === 'draw') {
-                canvas.classList.add('active');
-                master.style.cursor = 'crosshair';
-            } else {
-                canvas.classList.remove('active');
-                master.style.cursor = 'grab';
-            }
-        }
+            // Zoom centrado en el mouse
+            const rect = viewport.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
 
-        // Movimiento de la Pizarra (Panning)
-        master.onmousedown = (e) => {
-            if(currentTool === 'pan' || e.button === 1) {
+            const wx = (mouseX - posX) / scale;
+            const wy = (mouseY - posY) / scale;
+
+            scale *= factor;
+            scale = Math.min(Math.max(0.1, scale), 5); // Limites de zoom
+
+            posX = mouseX - wx * scale;
+            posY = mouseY - wy * scale;
+
+            updateTransform();
+        }, { passive: false });
+
+        // --- MOVIMIENTO (PANNING) ---
+        viewport.addEventListener('mousedown', (e) => {
+            if (e.button === 1 || !canDraw) { // Botón medio o modo pan
                 isPanning = true;
-                startX = e.clientX - infiniteCanvas.offsetLeft;
-                startY = e.clientY - infiniteCanvas.offsetTop;
-                master.style.cursor = 'grabbing';
+                viewport.style.cursor = 'grabbing';
             }
-        };
+        });
 
-        window.onmousemove = (e) => {
-            if(isPanning) {
-                infiniteCanvas.style.left = (e.clientX - startX) + 'px';
-                infiniteCanvas.style.top = (e.clientY - startY) + 'px';
+        window.addEventListener('mousemove', (e) => {
+            if (isPanning) {
+                posX += e.movementX;
+                posY += e.movementY;
+                updateTransform();
             }
-        };
+        });
 
-        window.onmouseup = () => {
+        window.addEventListener('mouseup', () => {
             isPanning = false;
-            if(currentTool === 'pan') master.style.cursor = 'grab';
-        };
+            viewport.style.cursor = canDraw ? 'crosshair' : 'grab';
+        });
 
-        // Zoom
-        function zoomIn() { scale += 0.1; updateTransform(); }
-        function zoomOut() { if(scale > 0.2) scale -= 0.1; updateTransform(); }
         function updateTransform() {
-            infiniteCanvas.style.transform = `scale(${scale})`;
+            wrapper.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
         }
 
-        // Dibujo
-        canvas.onmousedown = (e) => {
-            if(currentTool !== 'draw') return;
+        // --- DIBUJO ---
+        function toggleDraw() {
+            canDraw = !canDraw;
+            document.getElementById('draw-toggle').classList.toggle('active');
+            drawCanvas.classList.toggle('active');
+            viewport.style.cursor = canDraw ? 'crosshair' : 'grab';
+        }
+
+        drawCanvas.onmousedown = (e) => {
+            if (!canDraw) return;
             isDrawing = true;
             ctx.beginPath();
-            const rect = canvas.getBoundingClientRect();
-            ctx.moveTo((e.clientX - rect.left)/scale, (e.clientY - rect.top)/scale);
+            const rect = drawCanvas.getBoundingClientRect();
+            ctx.moveTo((e.clientX - rect.left) / scale, (e.clientY - rect.top) / scale);
         };
 
-        canvas.onmousemove = (e) => {
-            if(!isDrawing) return;
-            const rect = canvas.getBoundingClientRect();
-            ctx.lineTo((e.clientX - rect.left)/scale, (e.clientY - rect.top)/scale);
-            ctx.strokeStyle = document.getElementById('mainColor').value;
-            ctx.lineWidth = document.getElementById('penSize').value;
+        drawCanvas.onmousemove = (e) => {
+            if (!isDrawing) return;
+            const rect = drawCanvas.getBoundingClientRect();
+            ctx.lineTo((e.clientX - rect.left) / scale, (e.clientY - rect.top) / scale);
+            ctx.strokeStyle = document.getElementById('picker').value;
+            ctx.lineWidth = 5 / scale;
             ctx.lineCap = 'round';
             ctx.stroke();
         };
 
-        canvas.onmouseup = () => isDrawing = false;
+        drawCanvas.onmouseup = () => isDrawing = false;
 
-        // Crear Elementos
-        function createBox(type, content = "Texto...") {
+        // --- ELEMENTOS ---
+        function addNote() { createEl('note', 'Nueva Nota'); }
+        function addNode() { createEl('node', 'Concepto'); }
+
+        function createEl(type, text) {
             const el = document.createElement('div');
-            el.className = `element ${type === 'note' ? 'note-pro' : 'node-pro'}`;
-            // Posicionar en el centro de la vista actual
-            el.style.left = (Math.abs(infiniteCanvas.offsetLeft) + window.innerWidth/2) + 'px';
-            el.style.top = (Math.abs(infiniteCanvas.offsetTop) + window.innerHeight/2) + 'px';
-            
+            el.className = `element ${type}`;
+            // Spawnea en el centro de la pantalla actual
+            el.style.left = (Math.abs(posX) + window.innerWidth/2) / scale + 'px';
+            el.style.top = (Math.abs(posY) + window.innerHeight/2) / scale + 'px';
+
             el.innerHTML = `
-                <div style="display:flex; justify-content:flex-end; gap:5px; font-size:12px;">
-                    <i class="fas fa-plus-circle" onclick="addChild(this.parentElement.parentElement)" style="cursor:pointer"></i>
-                    <i class="fas fa-trash" onclick="this.parentElement.parentElement.remove(); updateConnections();" style="cursor:pointer"></i>
+                <div class="el-header">
+                    <i class="fas fa-plus" onclick="addChild(this.parentElement.parentElement)"></i>
+                    <i class="fas fa-trash" onclick="removeEl(this.parentElement.parentElement)"></i>
                 </div>
-                <div class="content-area" contenteditable="true">${content}</div>
+                <div class="el-content" contenteditable="true">${text}</div>
             `;
-            
-            infiniteCanvas.appendChild(el);
+
+            wrapper.appendChild(el);
             makeDraggable(el);
-            new ResizeObserver(() => updateConnections()).observe(el);
+            new ResizeObserver(() => updateLines()).observe(el);
             return el;
         }
 
-        function addNote() { createBox('note', 'Nueva Idea'); }
-        function addNode() { createBox('node', 'Concepto'); }
-
         function addChild(parent) {
-            const child = createBox('node', 'Hijo');
-            child.style.left = (parseInt(parent.style.left) + 300) + 'px';
+            const child = createEl('node', 'Hijo');
+            child.style.left = (parseFloat(parent.style.left) + 300) + 'px';
             child.style.top = parent.style.top;
             connections.push({from: parent, to: child});
-            updateConnections();
+            updateLines();
         }
 
-        // Drag & Drop de elementos
         function makeDraggable(el) {
-            let p1, p2, p3, p4;
+            let startX, startY;
             el.onmousedown = (e) => {
-                if(e.target.contentEditable === "true") return;
+                if (e.target.contentEditable === "true" || e.target.classList.contains('fas')) return;
                 e.stopPropagation();
-                p3 = e.clientX; p4 = e.clientY;
-                document.onmousemove = (e) => {
-                    p1 = (p3 - e.clientX) / scale;
-                    p2 = (p4 - e.clientY) / scale;
-                    p3 = e.clientX; p4 = e.clientY;
-                    el.style.top = (el.offsetTop - p2) + "px";
-                    el.style.left = (el.offsetLeft - p1) + "px";
-                    updateConnections();
+                startX = e.clientX; startY = e.clientY;
+                
+                const move = (e) => {
+                    const dx = (e.clientX - startX) / scale;
+                    const dy = (e.clientY - startY) / scale;
+                    el.style.left = (el.offsetLeft + dx) + 'px';
+                    el.style.top = (el.offsetTop + dy) + "px";
+                    startX = e.clientX; startY = e.clientY;
+                    updateLines();
                 };
-                document.onmouseup = () => { document.onmousemove = null; };
+                
+                const up = () => {
+                    window.removeEventListener('mousemove', move);
+                    window.removeEventListener('mouseup', up);
+                };
+                
+                window.addEventListener('mousemove', move);
+                window.addEventListener('mouseup', up);
             };
         }
 
-        // Conexiones Curvas (Miro Style)
-        function updateConnections() {
-            svgLayer.innerHTML = '';
+        function updateLines() {
+            svg.innerHTML = '';
             connections.forEach(c => {
-                if(!c.from.parentElement || !c.to.parentElement) return;
+                if (!c.from.parentElement || !c.to.parentElement) return;
                 const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
                 const x1 = c.from.offsetLeft + c.from.offsetWidth;
                 const y1 = c.from.offsetTop + c.from.offsetHeight / 2;
                 const x2 = c.to.offsetLeft;
                 const y2 = c.to.offsetTop + c.to.offsetHeight / 2;
-                
                 const d = `M ${x1} ${y1} C ${(x1+x2)/2} ${y1}, ${(x1+x2)/2} ${y2}, ${x2} ${y2}`;
                 path.setAttribute('d', d);
                 path.setAttribute('stroke', '#ff00ff');
                 path.setAttribute('stroke-width', '3');
                 path.setAttribute('fill', 'none');
-                svgLayer.appendChild(path);
+                svg.appendChild(path);
             });
         }
 
-        // Imagenes
-        document.getElementById('file-input').onchange = function(e) {
+        // --- IMÁGENES ---
+        document.getElementById('img-up').onchange = (e) => {
+            const file = e.target.files[0];
             const reader = new FileReader();
-            reader.onload = (ev) => {
-                const imgWrap = document.createElement('div');
-                imgWrap.className = 'element';
-                imgWrap.style.left = (Math.abs(infiniteCanvas.offsetLeft) + 200) + 'px';
-                imgWrap.style.top = (Math.abs(infiniteCanvas.offsetTop) + 200) + 'px';
-                imgWrap.innerHTML = `<img src="${ev.target.result}" style="width:100%; pointer-events:none; border-radius:8px;">`;
-                infiniteCanvas.appendChild(imgWrap);
-                makeDraggable(imgWrap);
+            reader.onload = (f) => {
+                const img = document.createElement('div');
+                img.className = 'element';
+                img.style.left = (Math.abs(posX) + 100)/scale + 'px';
+                img.style.top = (Math.abs(posY) + 100)/scale + 'px';
+                img.innerHTML = `<img src="${f.target.result}" style="width:100%; height:100%; object-fit:contain; pointer-events:none; border-radius:10px;">`;
+                wrapper.appendChild(img);
+                makeDraggable(img);
             };
-            reader.readAsDataURL(e.target.files[0]);
+            reader.readAsDataURL(file);
         };
 
-        function clearAll() {
-            if(confirm("¿Borrar todo?")) {
-                ctx.clearRect(0,0,5000,5000);
-                document.querySelectorAll('.element').forEach(e => e.remove());
-                connections = []; updateConnections();
-            }
-        }
+        function removeEl(el) { el.remove(); updateLines(); }
+        function clearBoard() { if(confirm('¿Limpiar todo?')) location.reload(); }
 
-        function exportImage() {
-            const link = document.createElement('a');
-            link.download = 'pink-ultra-board.png';
-            link.href = canvas.toDataURL();
-            link.click();
-        }
-
-        // Setup inicial de herramienta
-        setTool('pan');
+        init();
     </script>
 </body>
 </html>
