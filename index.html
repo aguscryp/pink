@@ -3,94 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pink Ultra - Fluid Workspace</title>
+    <title>Pink - Miro Experience</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
-            --bg: #0b0b1a;
+            --bg: #080812;
             --pink: #ff00ff;
             --blue: #00d2ff;
-            --panel: rgba(15, 15, 35, 0.85);
+            --node-bg: rgba(255, 255, 255, 0.08);
         }
 
-        * { box-sizing: border-box; outline: none; }
-        body, html { 
-            margin: 0; padding: 0; width: 100%; height: 100%; 
-            background: var(--bg); color: white;
-            font-family: 'Inter', sans-serif; overflow: hidden;
-        }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: var(--bg); color: white; font-family: 'Inter', sans-serif; overflow: hidden; }
 
-        /* Contenedor de la Pizarra */
-        #viewport {
-            width: 100vw; height: 100vh;
-            cursor: grab;
-            perspective: 1000px;
-            background: radial-gradient(circle at center, #1a1a3a 0%, #0b0b1a 100%);
-        }
+        /* Lienzo */
+        #viewport { width: 100vw; height: 100vh; cursor: grab; background: radial-gradient(circle, #1a1a3a 0%, #080812 100%); }
+        #canvas-wrapper { position: absolute; width: 20000px; height: 20000px; transform-origin: 0 0; will-change: transform; }
+        .grid { position: absolute; inset: 0; background-image: radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px); background-size: 40px 40px; pointer-events: none; }
 
-        #canvas-wrapper {
-            position: absolute;
-            width: 10000px; height: 10000px;
-            top: 0; left: 0;
-            transform-origin: 0 0;
-            will-change: transform; /* Optimización de rendimiento */
-        }
-
-        /* Cuadrícula infinita */
-        .grid {
-            position: absolute; inset: 0;
-            background-image: 
-                linear-gradient(to right, rgba(255,255,255,0.03) 1px, transparent 1px),
-                linear-gradient(to bottom, rgba(255,255,255,0.03) 1px, transparent 1px);
-            background-size: 50px 50px;
-            pointer-events: none;
-        }
-
-        /* Herramientas Flotantes */
-        .ui-dock {
-            position: fixed; bottom: 30px; left: 50%;
-            transform: translateX(-50%);
-            background: var(--panel);
-            backdrop-filter: blur(20px);
-            padding: 12px 25px;
-            border-radius: 25px;
-            border: 1px solid rgba(255,255,255,0.1);
-            display: flex; gap: 15px; align-items: center;
-            z-index: 1000;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
-        }
-
-        .tool-btn {
-            background: none; border: none; color: white;
-            font-size: 1.3rem; cursor: pointer; transition: 0.2s;
-            width: 45px; height: 45px; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-        }
-        .tool-btn:hover { background: var(--pink); color: black; transform: translateY(-5px); }
-        .tool-btn.active { background: var(--blue); color: black; }
-
-        /* Elementos (Notas/Nodos) */
+        /* Elementos Estilo Miro */
         .element {
-            position: absolute; min-width: 200px; min-height: 150px;
-            background: rgba(255,255,255,0.05);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            cursor: move;
-            display: flex; flex-direction: column;
-            resize: both; overflow: hidden;
-            will-change: top, left;
+            position: absolute; min-width: 140px; min-height: 80px;
+            background: var(--node-bg); backdrop-filter: blur(10px);
+            border: 2px solid rgba(255,255,255,0.1); border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            cursor: move; box-shadow: 0 10px 20px rgba(0,0,0,0.4);
+            transition: border 0.2s, box-shadow 0.2s;
         }
+        .element:hover { border-color: var(--blue); }
+        .el-content { padding: 15px; outline: none; text-align: center; font-size: 14px; width: 100%; }
 
-        .element.note { background: rgba(255, 240, 100, 0.9); color: #222; border: none; }
-        .element.node { border: 2px solid var(--pink); border-radius: 50px; background: rgba(255,0,255,0.1); }
+        /* Puntos de conexión (Miro style) */
+        .conn-dot {
+            position: absolute; width: 12px; height: 12px;
+            background: var(--blue); border-radius: 50%;
+            display: none; cursor: crosshair; z-index: 20;
+            box-shadow: 0 0 10px var(--blue);
+        }
+        .element:hover .conn-dot { display: block; }
+        
+        .dot-top { top: -6px; left: 50%; transform: translateX(-50%); }
+        .dot-bottom { bottom: -6px; left: 50%; transform: translateX(-50%); }
+        .dot-left { left: -6px; top: 50%; transform: translateY(-50%); }
+        .dot-right { right: -6px; top: 50%; transform: translateY(-50%); }
 
-        .el-header { padding: 8px; display: flex; justify-content: flex-end; gap: 8px; opacity: 0; transition: 0.3s; }
-        .element:hover .el-header { opacity: 1; }
-        .el-content { flex-grow: 1; padding: 15px; text-align: center; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 1.1rem; }
+        /* Herramientas */
+        .ui-dock {
+            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+            background: rgba(10, 10, 25, 0.9); padding: 10px 20px;
+            border-radius: 50px; border: 1px solid var(--pink);
+            display: flex; gap: 20px; align-items: center; z-index: 1000;
+        }
+        .btn { background: none; border: none; color: white; cursor: pointer; font-size: 1.2rem; transition: 0.2s; }
+        .btn:hover { color: var(--pink); transform: scale(1.2); }
 
-        /* SVG para Flechas */
+        /* Capas visuales */
         #svg-layer { position: absolute; inset: 0; pointer-events: none; z-index: 1; }
         canvas#draw-layer { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
         canvas#draw-layer.active { pointer-events: all; cursor: crosshair; }
@@ -99,16 +65,15 @@
 <body>
 
     <div class="ui-dock">
-        <h2 style="font-size: 1rem; color: var(--pink); margin: 0 15px 0 0; letter-spacing: 2px;">PINK</h2>
-        <button class="tool-btn" onclick="addNote()"><i class="fas fa-sticky-note"></i></button>
-        <button class="tool-btn" onclick="addNode()"><i class="fas fa-project-diagram"></i></button>
-        <button class="tool-btn" onclick="document.getElementById('img-up').click()"><i class="fas fa-image"></i></button>
-        <button class="tool-btn" id="draw-toggle" onclick="toggleDraw()"><i class="fas fa-pen-nib"></i></button>
-        <input type="color" id="picker" value="#ff00ff" style="width:30px; border:none; background:none; cursor:pointer;">
-        <button class="tool-btn" onclick="clearBoard()"><i class="fas fa-trash-alt"></i></button>
+        <span style="color:var(--pink); font-weight:bold; letter-spacing:2px;">PINK PRO</span>
+        <button class="btn" onclick="addBaseNode()" title="Nuevo Nodo"><i class="fas fa-plus-square"></i></button>
+        <button class="btn" id="pen-btn" onclick="toggleDraw()"><i class="fas fa-pen"></i></button>
+        <input type="color" id="pColor" value="#ff00ff" style="border:none; background:none; width:30px; cursor:pointer;">
+        <button class="btn" onclick="document.getElementById('img-in').click()"><i class="fas fa-image"></i></button>
+        <button class="btn" onclick="location.reload()"><i class="fas fa-trash"></i></button>
     </div>
 
-    <input type="file" id="img-up" hidden accept="image/*">
+    <input type="file" id="img-in" hidden accept="image/*">
 
     <div id="viewport">
         <div id="canvas-wrapper">
@@ -119,156 +84,91 @@
     </div>
 
     <script>
-        const viewport = document.getElementById('viewport');
         const wrapper = document.getElementById('canvas-wrapper');
+        const viewport = document.getElementById('viewport');
+        const svg = document.getElementById('svg-layer');
         const drawCanvas = document.getElementById('draw-layer');
         const ctx = drawCanvas.getContext('2d');
-        const svg = document.getElementById('svg-layer');
 
-        let scale = 1;
-        let posX = -4000, posY = -4000; // Centrar inicialmente
-        let isPanning = false;
-        let isDrawing = false;
-        let canDraw = false;
+        let scale = 1, posX = -8000, posY = -8000;
+        let isPanning = false, isDrawing = false, canDraw = false;
         let connections = [];
 
-        // Inicialización
         function init() {
-            drawCanvas.width = 10000;
-            drawCanvas.height = 10000;
-            updateTransform();
+            drawCanvas.width = 20000; drawCanvas.height = 20000;
+            update();
         }
 
-        // --- ZOOM CON LA RUEDA (MOUSE WHEEL) ---
-        viewport.addEventListener('wheel', (e) => {
+        // --- ZOOM & PAN (RUEDA Y ARRASTRE) ---
+        viewport.onwheel = (e) => {
             e.preventDefault();
-            const delta = -e.deltaY;
-            const factor = delta > 0 ? 1.1 : 0.9;
-            
-            // Zoom centrado en el mouse
-            const rect = viewport.getBoundingClientRect();
-            const mouseX = e.clientX - rect.left;
-            const mouseY = e.clientY - rect.top;
-
-            const wx = (mouseX - posX) / scale;
-            const wy = (mouseY - posY) / scale;
-
-            scale *= factor;
-            scale = Math.min(Math.max(0.1, scale), 5); // Limites de zoom
-
-            posX = mouseX - wx * scale;
-            posY = mouseY - wy * scale;
-
-            updateTransform();
-        }, { passive: false });
-
-        // --- MOVIMIENTO (PANNING) ---
-        viewport.addEventListener('mousedown', (e) => {
-            if (e.button === 1 || !canDraw) { // Botón medio o modo pan
-                isPanning = true;
-                viewport.style.cursor = 'grabbing';
-            }
-        });
-
-        window.addEventListener('mousemove', (e) => {
-            if (isPanning) {
-                posX += e.movementX;
-                posY += e.movementY;
-                updateTransform();
-            }
-        });
-
-        window.addEventListener('mouseup', () => {
-            isPanning = false;
-            viewport.style.cursor = canDraw ? 'crosshair' : 'grab';
-        });
-
-        function updateTransform() {
-            wrapper.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
-        }
-
-        // --- DIBUJO ---
-        function toggleDraw() {
-            canDraw = !canDraw;
-            document.getElementById('draw-toggle').classList.toggle('active');
-            drawCanvas.classList.toggle('active');
-            viewport.style.cursor = canDraw ? 'crosshair' : 'grab';
-        }
-
-        drawCanvas.onmousedown = (e) => {
-            if (!canDraw) return;
-            isDrawing = true;
-            ctx.beginPath();
-            const rect = drawCanvas.getBoundingClientRect();
-            ctx.moveTo((e.clientX - rect.left) / scale, (e.clientY - rect.top) / scale);
+            const factor = e.deltaY > 0 ? 0.9 : 1.1;
+            const mouseX = e.clientX, mouseY = e.clientY;
+            const wx = (mouseX - posX) / scale, wy = (mouseY - posY) / scale;
+            scale = Math.min(Math.max(0.1, scale * factor), 5);
+            posX = mouseX - wx * scale; posY = mouseY - wy * scale;
+            update();
         };
 
-        drawCanvas.onmousemove = (e) => {
-            if (!isDrawing) return;
-            const rect = drawCanvas.getBoundingClientRect();
-            ctx.lineTo((e.clientX - rect.left) / scale, (e.clientY - rect.top) / scale);
-            ctx.strokeStyle = document.getElementById('picker').value;
-            ctx.lineWidth = 5 / scale;
-            ctx.lineCap = 'round';
-            ctx.stroke();
+        viewport.onmousedown = (e) => { if(!canDraw) isPanning = true; };
+        window.onmousemove = (e) => {
+            if(isPanning) { posX += e.movementX; posY += e.movementY; update(); }
         };
+        window.onmouseup = () => isPanning = false;
 
-        drawCanvas.onmouseup = () => isDrawing = false;
+        function update() { wrapper.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`; }
 
-        // --- ELEMENTOS ---
-        function addNote() { createEl('note', 'Nueva Nota'); }
-        function addNode() { createEl('node', 'Concepto'); }
+        // --- CREACIÓN DE NODOS ---
+        function addBaseNode() {
+            createNode((Math.abs(posX) + window.innerWidth/2)/scale, (Math.abs(posY) + window.innerHeight/2)/scale);
+        }
 
-        function createEl(type, text) {
+        function createNode(x, y, parent = null) {
             const el = document.createElement('div');
-            el.className = `element ${type}`;
-            // Spawnea en el centro de la pantalla actual
-            el.style.left = (Math.abs(posX) + window.innerWidth/2) / scale + 'px';
-            el.style.top = (Math.abs(posY) + window.innerHeight/2) / scale + 'px';
-
+            el.className = 'element';
+            el.style.left = x + 'px'; el.style.top = y + 'px';
             el.innerHTML = `
-                <div class="el-header">
-                    <i class="fas fa-plus" onclick="addChild(this.parentElement.parentElement)"></i>
-                    <i class="fas fa-trash" onclick="removeEl(this.parentElement.parentElement)"></i>
-                </div>
-                <div class="el-content" contenteditable="true">${text}</div>
+                <div class="conn-dot dot-top" onclick="spawnChild(this, 'top')"></div>
+                <div class="conn-dot dot-right" onclick="spawnChild(this, 'right')"></div>
+                <div class="conn-dot dot-bottom" onclick="spawnChild(this, 'bottom')"></div>
+                <div class="conn-dot dot-left" onclick="spawnChild(this, 'left')"></div>
+                <div class="el-content" contenteditable="true">Nuevo Nodo</div>
             `;
-
             wrapper.appendChild(el);
             makeDraggable(el);
             new ResizeObserver(() => updateLines()).observe(el);
+            if(parent) connections.push({from: parent, to: el});
+            updateLines();
             return el;
         }
 
-        function addChild(parent) {
-            const child = createEl('node', 'Hijo');
-            child.style.left = (parseFloat(parent.style.left) + 300) + 'px';
-            child.style.top = parent.style.top;
-            connections.push({from: parent, to: child});
-            updateLines();
+        function spawnChild(dot, dir) {
+            const parent = dot.parentElement;
+            const offset = 250;
+            let x = parseFloat(parent.style.left);
+            let y = parseFloat(parent.style.top);
+
+            if(dir === 'right') x += offset;
+            else if(dir === 'left') x -= offset;
+            else if(dir === 'top') y -= offset;
+            else if(dir === 'bottom') y += offset;
+
+            createNode(x, y, parent);
         }
 
         function makeDraggable(el) {
-            let startX, startY;
+            let sx, sy;
             el.onmousedown = (e) => {
-                if (e.target.contentEditable === "true" || e.target.classList.contains('fas')) return;
+                if(e.target.contentEditable === "true" || e.target.classList.contains('conn-dot')) return;
                 e.stopPropagation();
-                startX = e.clientX; startY = e.clientY;
-                
+                sx = e.clientX; sy = e.clientY;
                 const move = (e) => {
-                    const dx = (e.clientX - startX) / scale;
-                    const dy = (e.clientY - startY) / scale;
-                    el.style.left = (el.offsetLeft + dx) + 'px';
-                    el.style.top = (el.offsetTop + dy) + "px";
-                    startX = e.clientX; startY = e.clientY;
+                    el.style.left = (el.offsetLeft + (e.clientX - sx)/scale) + 'px';
+                    el.style.top = (el.offsetTop + (e.clientY - sy)/scale) + 'px';
+                    sx = e.clientX; sy = e.clientY;
                     updateLines();
                 };
-                
-                const up = () => {
-                    window.removeEventListener('mousemove', move);
-                    window.removeEventListener('mouseup', up);
-                };
-                
+                const up = () => { window.removeEventListener('mousemove', move); };
                 window.addEventListener('mousemove', move);
                 window.addEventListener('mouseup', up);
             };
@@ -277,39 +177,53 @@
         function updateLines() {
             svg.innerHTML = '';
             connections.forEach(c => {
-                if (!c.from.parentElement || !c.to.parentElement) return;
-                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-                const x1 = c.from.offsetLeft + c.from.offsetWidth;
+                const x1 = c.from.offsetLeft + c.from.offsetWidth / 2;
                 const y1 = c.from.offsetTop + c.from.offsetHeight / 2;
-                const x2 = c.to.offsetLeft;
+                const x2 = c.to.offsetLeft + c.to.offsetWidth / 2;
                 const y2 = c.to.offsetTop + c.to.offsetHeight / 2;
+                
+                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
                 const d = `M ${x1} ${y1} C ${(x1+x2)/2} ${y1}, ${(x1+x2)/2} ${y2}, ${x2} ${y2}`;
                 path.setAttribute('d', d);
-                path.setAttribute('stroke', '#ff00ff');
-                path.setAttribute('stroke-width', '3');
+                path.setAttribute('stroke', '#00d2ff');
+                path.setAttribute('stroke-width', '2');
                 path.setAttribute('fill', 'none');
                 svg.appendChild(path);
             });
         }
 
+        // --- DIBUJO ---
+        function toggleDraw() {
+            canDraw = !canDraw;
+            document.getElementById('pen-btn').classList.toggle('active');
+            drawCanvas.classList.toggle('active');
+        }
+
+        drawCanvas.onmousedown = (e) => { if(!canDraw) return; isDrawing = true; ctx.beginPath(); };
+        drawCanvas.onmousemove = (e) => {
+            if(!isDrawing) return;
+            const rect = drawCanvas.getBoundingClientRect();
+            ctx.lineTo((e.clientX - rect.left)/scale, (e.clientY - rect.top)/scale);
+            ctx.strokeStyle = document.getElementById('pColor').value;
+            ctx.lineWidth = 4 / scale;
+            ctx.lineCap = 'round';
+            ctx.stroke();
+        };
+        drawCanvas.onmouseup = () => isDrawing = false;
+
         // --- IMÁGENES ---
-        document.getElementById('img-up').onchange = (e) => {
-            const file = e.target.files[0];
+        document.getElementById('img-in').onchange = (e) => {
             const reader = new FileReader();
             reader.onload = (f) => {
-                const img = document.createElement('div');
-                img.className = 'element';
-                img.style.left = (Math.abs(posX) + 100)/scale + 'px';
-                img.style.top = (Math.abs(posY) + 100)/scale + 'px';
-                img.innerHTML = `<img src="${f.target.result}" style="width:100%; height:100%; object-fit:contain; pointer-events:none; border-radius:10px;">`;
-                wrapper.appendChild(img);
-                makeDraggable(img);
+                const el = document.createElement('div');
+                el.className = 'element';
+                el.style.left = (Math.abs(posX)+200)/scale+'px'; el.style.top = (Math.abs(posY)+200)/scale+'px';
+                el.innerHTML = `<img src="${f.target.result}" style="width:200px; border-radius:10px; pointer-events:none;">`;
+                wrapper.appendChild(el);
+                makeDraggable(el);
             };
-            reader.readAsDataURL(file);
+            reader.readAsDataURL(e.target.files[0]);
         };
-
-        function removeEl(el) { el.remove(); updateLines(); }
-        function clearBoard() { if(confirm('¿Limpiar todo?')) location.reload(); }
 
         init();
     </script>
