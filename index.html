@@ -3,69 +3,80 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pink Ultra - Fluid Move</title>
+    <title>Pink Ultra - Neon Flow</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
-            --bg: #05050a;
+            --bg: #030308;
             --pink: #ff00ff;
             --blue: #00d2ff;
-            --glass: rgba(255, 255, 255, 0.08);
+            --neon-shadow: 0 0 15px rgba(0, 210, 255, 0.5);
         }
 
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: var(--bg); color: white; font-family: 'Inter', sans-serif; overflow: hidden; }
 
         /* Lienzo */
-        #viewport { width: 100vw; height: 100vh; cursor: grab; background: radial-gradient(circle at center, #11112b 0%, #05050a 100%); }
-        #canvas-wrapper { position: absolute; width: 30000px; height: 30000px; transform-origin: 0 0; will-change: transform; }
-        .grid { position: absolute; inset: 0; background-image: radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px); background-size: 50px 50px; pointer-events: none; }
+        #viewport { width: 100vw; height: 100vh; cursor: grab; background: #050510; }
+        #canvas-wrapper { position: absolute; width: 30000px; height: 30000px; transform-origin: 0 0; }
+        .grid { position: absolute; inset: 0; background-image: radial-gradient(rgba(0, 210, 255, 0.1) 1px, transparent 1px); background-size: 60px 60px; pointer-events: none; }
 
-        /* Elementos */
+        /* Elementos Neón */
         .element {
-            position: absolute; min-width: 80px; min-height: 40px;
-            background: var(--glass); backdrop-filter: blur(12px);
-            border: 1px solid rgba(255,255,255,0.2); border-radius: 8px;
+            position: absolute; min-width: 120px; min-height: 60px;
+            background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(15px);
+            border: 1px solid rgba(0, 210, 255, 0.3); border-radius: 12px;
             display: flex; align-items: center; justify-content: center;
-            cursor: move; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            user-select: none; /* Evita selección de texto accidental al mover */
+            cursor: move; box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+            transition: border 0.3s, box-shadow 0.3s;
         }
-        .element:hover { border-color: var(--blue); }
-        .el-content { 
-            padding: 15px; outline: none; text-align: center; font-size: 14px; 
-            width: 100%; height: 100%; display: flex; align-items: center; 
-            justify-content: center; cursor: text; /* Indica que aquí se escribe */
-        }
+        .element:hover { border-color: var(--blue); box-shadow: 0 0 20px rgba(0, 210, 255, 0.4); }
+        .el-content { padding: 20px; outline: none; text-align: center; font-size: 15px; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: #e0e0e0; }
 
-        /* Manejadores de Redimensionado */
-        .handle { position: absolute; width: 10px; height: 10px; background: white; border: 1px solid var(--blue); display: none; z-index: 30; }
+        /* Manejadores y Conectores */
+        .handle { position: absolute; width: 12px; height: 12px; background: #fff; border: 2px solid var(--blue); border-radius: 2px; display: none; z-index: 100; }
         .element:hover .handle { display: block; }
-        .h-nw { top: -5px; left: -5px; cursor: nwse-resize; }
-        .h-ne { top: -5px; right: -5px; cursor: nesw-resize; }
-        .h-sw { bottom: -5px; left: -5px; cursor: nesw-resize; }
-        .h-se { bottom: -5px; right: -5px; cursor: nwse-resize; }
-        
-        /* Puntos de Conexión */
+        .h-nw { top: -6px; left: -6px; cursor: nwse-resize; }
+        .h-ne { top: -6px; right: -6px; cursor: nesw-resize; }
+        .h-sw { bottom: -6px; left: -6px; cursor: nesw-resize; }
+        .h-se { bottom: -6px; right: -6px; cursor: nwse-resize; }
+
         .conn-dot {
-            position: absolute; width: 16px; height: 16px; background: var(--blue);
-            border-radius: 50%; display: none; cursor: crosshair; z-index: 40;
-            box-shadow: 0 0 10px var(--blue); border: 2px solid white;
+            position: absolute; width: 18px; height: 18px; background: var(--blue);
+            border-radius: 50%; display: none; cursor: crosshair; z-index: 110;
+            box-shadow: 0 0 15px var(--blue); border: 3px solid #fff;
         }
         .element:hover .conn-dot { display: block; }
-        .dot-top { top: -25px; left: 50%; transform: translateX(-50%); }
-        .dot-bottom { bottom: -25px; left: 50%; transform: translateX(-50%); }
-        .dot-left { left: -25px; top: 50%; transform: translateY(-50%); }
-        .dot-right { right: -25px; top: 50%; transform: translateY(-50%); }
+        .dot-top { top: -30px; left: 50%; transform: translateX(-50%); }
+        .dot-bottom { bottom: -30px; left: 50%; transform: translateX(-50%); }
+        .dot-left { left: -30px; top: 50%; transform: translateY(-50%); }
+        .dot-right { right: -30px; top: 50%; transform: translateY(-50%); }
 
-        /* UI */
-        .ui-dock {
-            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
-            background: rgba(10, 10, 20, 0.9); padding: 12px 25px;
-            border-radius: 50px; border: 1px solid var(--pink);
-            display: flex; gap: 20px; align-items: center; z-index: 1000;
+        /* Animación de flujo en la línea */
+        @keyframes flow {
+            from { stroke-dashoffset: 100; }
+            to { stroke-dashoffset: 0; }
         }
-        .btn { background: none; border: none; color: white; cursor: pointer; font-size: 1.3rem; transition: 0.2s; }
-        .btn:hover { color: var(--pink); transform: scale(1.1); }
-        .active { color: var(--blue) !important; }
+
+        .neon-line {
+            fill: none;
+            stroke: url(#neonGradient);
+            stroke-width: 3;
+            stroke-linecap: round;
+            filter: url(#glow);
+            stroke-dasharray: 10, 5;
+            animation: flow 2s linear infinite;
+        }
+
+        /* UI Dock */
+        .ui-dock {
+            position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%);
+            background: rgba(5, 5, 15, 0.95); padding: 15px 30px;
+            border-radius: 100px; border: 1px solid var(--blue);
+            display: flex; gap: 25px; align-items: center; z-index: 1000;
+            box-shadow: 0 0 30px rgba(0, 210, 255, 0.2);
+        }
+        .btn { background: none; border: none; color: white; cursor: pointer; font-size: 1.4rem; transition: 0.3s; }
+        .btn:hover { color: var(--blue); transform: scale(1.2); filter: drop-shadow(0 0 8px var(--blue)); }
 
         #svg-layer { position: absolute; inset: 0; pointer-events: none; z-index: 1; }
         canvas#draw-layer { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
@@ -75,13 +86,13 @@
 <body>
 
     <div class="ui-dock">
-        <span style="color:var(--pink); font-weight:bold;">PINK PRO</span>
-        <button class="btn" onclick="addNode()" title="Nodo"><i class="fas fa-square"></i></button>
-        <button class="btn" onclick="addNote()" title="Nota"><i class="fas fa-sticky-note"></i></button>
-        <button class="btn" id="pen-btn" onclick="toggleDraw()"><i class="fas fa-pen"></i></button>
-        <input type="color" id="pColor" value="#ff00ff" style="border:none; background:none; width:30px; cursor:pointer;">
+        <span style="color:var(--blue); font-weight:bold; letter-spacing:2px; text-shadow: var(--neon-shadow);">NEON FLOW</span>
+        <button class="btn" onclick="addNode()"><i class="fas fa-project-diagram"></i></button>
+        <button class="btn" onclick="addNote()"><i class="fas fa-sticky-note"></i></button>
+        <button class="btn" id="pen-btn" onclick="toggleDraw()"><i class="fas fa-pen-fancy"></i></button>
+        <input type="color" id="pColor" value="#00d2ff" style="border:none; background:none; width:30px; cursor:pointer;">
         <button class="btn" onclick="document.getElementById('img-in').click()"><i class="fas fa-image"></i></button>
-        <button class="btn" onclick="location.reload()"><i class="fas fa-trash"></i></button>
+        <button class="btn" onclick="location.reload()"><i class="fas fa-sync-alt"></i></button>
     </div>
 
     <input type="file" id="img-in" hidden accept="image/*">
@@ -89,7 +100,19 @@
     <div id="viewport">
         <div id="canvas-wrapper">
             <div class="grid"></div>
-            <svg id="svg-layer"></svg>
+            <svg id="svg-layer">
+                <defs>
+                    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+                        <feGaussianBlur stdDeviation="4" result="blur" />
+                        <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                    </filter>
+                    <linearGradient id="neonGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" style="stop-color:var(--blue);stop-opacity:1" />
+                        <stop offset="50%" style="stop-color:var(--pink);stop-opacity:1" />
+                        <stop offset="100%" style="stop-color:var(--blue);stop-opacity:1" />
+                    </linearGradient>
+                </defs>
+            </svg>
             <canvas id="draw-layer"></canvas>
         </div>
     </div>
@@ -127,15 +150,15 @@
 
         // --- ELEMENTOS ---
         function addNode() { createEl('node', 'Nodo'); }
-        function addNote() { createEl('note', 'Idea', '#fff9c4'); }
+        function addNote() { createEl('note', 'Idea Brillante', 'rgba(255, 0, 255, 0.1)'); }
 
         function createEl(type, text, bgColor = null) {
             const el = document.createElement('div');
             el.className = 'element';
-            if(bgColor) { el.style.background = bgColor; el.style.color = '#333'; }
+            if(bgColor) { el.style.background = bgColor; el.style.borderColor = 'var(--pink)'; el.style.boxShadow = '0 0 15px rgba(255,0,255,0.2)'; }
             el.style.left = (Math.abs(posX) + window.innerWidth/2)/scale + 'px';
             el.style.top = (Math.abs(posY) + window.innerHeight/2)/scale + 'px';
-            el.style.width = '180px'; el.style.height = '100px';
+            el.style.width = '200px'; el.style.height = '100px';
 
             el.innerHTML = `
                 <div class="handle h-nw" data-handle="nw"></div><div class="handle h-ne" data-handle="ne"></div>
@@ -154,7 +177,7 @@
         function spawn(dot, dir) {
             const p = dot.parentElement;
             let x = parseFloat(p.style.left), y = parseFloat(p.style.top);
-            const gap = 300;
+            const gap = 350;
             if(dir === 'e') x += gap; else if(dir === 'w') x -= gap;
             else if(dir === 'n') y -= gap; else if(dir === 's') y += gap;
             const child = createEl('node', 'Nuevo');
@@ -163,12 +186,9 @@
             updateLines();
         }
 
-        // --- LÓGICA DE MOVIMIENTO TOTAL Y REDIMENSIONADO ---
         function attachDragAndResize(el) {
             el.onmousedown = (e) => {
-                // Si el usuario hace clic en el contenido para escribir, no movemos
                 if(document.activeElement === el.querySelector('.el-content') && e.target.classList.contains('el-content')) return;
-                
                 e.stopPropagation();
                 const handle = e.target.dataset.handle;
                 const startX = e.clientX, startY = e.clientY;
@@ -178,60 +198,42 @@
                 const onMove = (me) => {
                     const dx = (me.clientX - startX) / scale;
                     const dy = (me.clientY - startY) / scale;
-
-                    if(!handle) { // MOVER (Presionando en cualquier parte)
-                        el.style.left = startL + dx + 'px';
-                        el.style.top = startT + dy + 'px';
-                    } else { // REDIMENSIONAR
-                        if(handle.includes('e')) el.style.width = Math.max(50, startW + dx) + 'px';
-                        if(handle.includes('s')) el.style.height = Math.max(40, startH + dy) + 'px';
-                        if(handle.includes('w')) { 
-                            const newW = Math.max(50, startW - dx);
-                            if(newW > 50) { el.style.width = newW + 'px'; el.style.left = startL + dx + 'px'; }
-                        }
-                        if(handle.includes('n')) { 
-                            const newH = Math.max(40, startH - dy);
-                            if(newH > 40) { el.style.height = newH + 'px'; el.style.top = startT + dy + 'px'; }
-                        }
+                    if(!handle) { el.style.left = startL + dx + 'px'; el.style.top = startT + dy + 'px'; }
+                    else {
+                        if(handle.includes('e')) el.style.width = Math.max(80, startW + dx) + 'px';
+                        if(handle.includes('s')) el.style.height = Math.max(50, startH + dy) + 'px';
+                        if(handle.includes('w')) { el.style.width = Math.max(80, startW - dx) + 'px'; el.style.left = startL + dx + 'px'; }
+                        if(handle.includes('n')) { el.style.height = Math.max(50, startH - dy) + 'px'; el.style.top = startT + dy + 'px'; }
                     }
                     updateLines();
                 };
-
-                const onUp = () => { 
-                    window.removeEventListener('mousemove', onMove); 
-                    window.removeEventListener('mouseup', onUp); 
-                };
+                const onUp = () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp); };
                 window.addEventListener('mousemove', onMove);
                 window.addEventListener('mouseup', onUp);
-            };
-
-            // Para entrar en modo edición solo con doble clic o clic específico en el texto
-            const content = el.querySelector('.el-content');
-            content.onmousedown = (e) => {
-                if(document.activeElement !== content) {
-                    // Si no está editando, dejamos que el mousedown del padre maneje el arrastre
-                } else {
-                    e.stopPropagation(); // Si ya está editando, permitimos selección de texto
-                }
             };
         }
 
         function updateLines() {
-            svg.innerHTML = '';
+            // Limpiar líneas pero mantener defs
+            const lines = svg.querySelectorAll('.neon-line');
+            lines.forEach(l => l.remove());
+
             connections.forEach(c => {
                 if(!c.from.parentElement || !c.to.parentElement) return;
                 const x1 = c.from.offsetLeft + c.from.offsetWidth / 2;
                 const y1 = c.from.offsetTop + c.from.offsetHeight / 2;
                 const x2 = c.to.offsetLeft + c.to.offsetWidth / 2;
                 const y2 = c.to.offsetTop + c.to.offsetHeight / 2;
+                
                 const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-                path.setAttribute('d', `M ${x1} ${y1} C ${(x1+x2)/2} ${y1}, ${(x1+x2)/2} ${y2}, ${x2} ${y2}`);
-                path.setAttribute('stroke', '#00d2ff'); path.setAttribute('stroke-width', '2'); path.setAttribute('fill', 'none');
+                // Curva de Bézier avanzada
+                const d = `M ${x1} ${y1} C ${(x1+x2)/2} ${y1}, ${(x1+x2)/2} ${y2}, ${x2} ${y2}`;
+                path.setAttribute('d', d);
+                path.setAttribute('class', 'neon-line');
                 svg.appendChild(path);
             });
         }
 
-        // --- DIBUJO ---
         function toggleDraw() { canDraw = !canDraw; document.getElementById('pen-btn').classList.toggle('active'); drawCanvas.classList.toggle('active'); }
         drawCanvas.onmousedown = () => { if(!canDraw) return; isDrawing = true; ctx.beginPath(); };
         drawCanvas.onmousemove = (e) => {
@@ -243,13 +245,12 @@
         };
         drawCanvas.onmouseup = () => isDrawing = false;
 
-        // --- IMAGEN ---
         document.getElementById('img-in').onchange = (e) => {
             const reader = new FileReader();
             reader.onload = (f) => {
                 const el = createEl('node', '');
-                el.style.background = 'none'; el.style.border = 'none';
-                el.innerHTML += `<img src="${f.target.result}" style="width:100%; height:100%; object-fit:contain; pointer-events:none;">`;
+                el.style.background = 'none'; el.style.border = '1px solid var(--blue)';
+                el.innerHTML += `<img src="${f.target.result}" style="width:100%; height:100%; object-fit:contain; pointer-events:none; border-radius:8px;">`;
             };
             reader.readAsDataURL(e.target.files[0]);
         };
