@@ -3,154 +3,89 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pink - Ultimate Workspace</title>
+    <title>Pink - Pro Workspace</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
-            --bg-gradient: linear-gradient(135deg, #1a0026 0%, #001a33 100%);
-            --pink-accent: #ffb7ff;
-            --panel-bg: rgba(20, 20, 30, 0.8);
-            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --bg: linear-gradient(135deg, #1a0026 0%, #001a33 100%);
+            --pink: #ffb7ff;
+            --glass: rgba(255, 255, 255, 0.1);
         }
 
-        body, html {
-            margin: 0; padding: 0; height: 100%;
-            font-family: 'Inter', sans-serif;
-            background: var(--bg-gradient);
-            color: white; overflow: hidden;
-        }
+        body, html { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; overflow: hidden; }
 
-        /* Panel Lateral Retráctil */
+        /* Sidebar Profesional */
         .sidebar {
-            position: fixed;
-            left: 0; top: 0; bottom: 0;
-            width: 260px;
-            background: var(--panel-bg);
-            backdrop-filter: blur(15px);
-            border-right: 1px solid rgba(255,255,255,0.1);
-            transition: var(--transition);
-            z-index: 1000;
-            display: flex;
-            flex-direction: column;
-            padding: 20px 15px;
+            position: fixed; left: 0; top: 0; bottom: 0; width: 250px;
+            background: rgba(10, 10, 20, 0.9); backdrop-filter: blur(10px);
+            border-right: 1px solid var(--pink); transition: 0.4s; z-index: 1000;
+            padding: 20px;
         }
+        .sidebar.collapsed { transform: translateX(-200px); }
+        .toggle-btn { position: absolute; right: 10px; top: 15px; cursor: pointer; color: var(--pink); }
 
-        .sidebar.collapsed { transform: translateX(-210px); }
-
-        .toggle-btn {
-            position: absolute;
-            right: 10px; top: 20px;
-            cursor: pointer; color: var(--pink-accent);
-            font-size: 1.2rem;
-        }
-
-        .sidebar h1 { 
-            font-size: 1.5rem; color: var(--pink-accent); 
-            margin-bottom: 30px; letter-spacing: 2px;
-            display: flex; align-items: center; gap: 10px;
-        }
-
-        /* Herramientas */
-        .tool-section { margin-bottom: 25px; }
-        .tool-section label { display: block; font-size: 0.7rem; text-transform: uppercase; margin-bottom: 10px; opacity: 0.6; }
-        
         .btn-tool {
-            width: 100%;
-            padding: 12px;
-            margin-bottom: 8px;
-            border: none;
-            border-radius: 10px;
-            background: rgba(255,255,255,0.05);
-            color: #ddd;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            cursor: pointer;
-            transition: var(--transition);
-            text-decoration: none;
+            width: 100%; padding: 12px; margin: 8px 0; border: none; border-radius: 8px;
+            background: var(--glass); color: white; cursor: pointer; display: flex; align-items: center; gap: 10px;
+            transition: 0.3s;
         }
+        .btn-tool:hover { background: var(--pink); color: black; }
 
-        .btn-tool:hover { background: rgba(255,183,255,0.2); color: white; }
-        .btn-tool i { width: 20px; font-size: 1.1rem; }
+        /* Contenedor Principal */
+        #viewport { margin-left: 250px; height: 100vh; position: relative; transition: 0.4s; }
+        .sidebar.collapsed + #viewport { margin-left: 50px; }
 
-        /* Lienzo */
-        #viewport {
-            margin-left: 260px;
-            width: calc(100% - 260px);
-            height: 100%;
-            position: relative;
-            transition: var(--transition);
-        }
-        .sidebar.collapsed + #viewport { margin-left: 50px; width: calc(100% - 50px); }
+        canvas { position: absolute; top: 0; left: 0; z-index: 1; cursor: crosshair; }
+        #svg-canvas { position: absolute; width: 100%; height: 100%; pointer-events: none; z-index: 2; }
 
-        canvas { position: absolute; top: 0; left: 0; cursor: crosshair; }
-
-        /* Elementos: Notas y Esquemas */
+        /* Elementos Dinámicos */
         .element {
-            position: absolute;
-            min-width: 180px;
-            padding: 15px;
-            border-radius: 12px;
-            cursor: move;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            z-index: 10;
+            position: absolute; min-width: 150px; min-height: 100px;
+            background: white; color: #333; border-radius: 10px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.4); z-index: 10;
+            display: flex; flex-direction: column; overflow: hidden;
+            resize: both; /* Permite agrandar/achicar */
         }
 
-        .note { background: #fff9c4; color: #333; border-left: 5px solid #fbc02d; }
-        .node { 
-            background: rgba(255, 255, 255, 0.95); color: #222; 
-            border: 2px solid var(--pink-accent); font-weight: 600;
+        .el-header {
+            background: #eee; padding: 5px 10px; display: flex; justify-content: space-between;
+            align-items: center; cursor: move; border-bottom: 1px solid #ddd;
         }
 
-        .editable { outline: none; min-height: 20px; cursor: text; margin-top: 5px; }
+        .el-body { padding: 10px; flex-grow: 1; overflow-y: auto; outline: none; }
         
-        .node-btn {
-            background: var(--pink-accent); border: none; border-radius: 4px;
-            font-size: 0.7rem; padding: 4px 8px; margin-top: 10px; cursor: pointer;
-        }
+        .node { border: 3px solid var(--pink); background: #fdf0ff; }
+        .note { background: #fff9c4; }
 
-        /* Modal de Imágenes */
+        /* Modal */
         .modal {
-            display: none; position: fixed; z-index: 2000;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.8); align-items: center; justify-content: center;
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8);
+            z-index: 2000; align-items: center; justify-content: center;
         }
-        .modal-content {
-            background: #222; padding: 30px; border-radius: 20px; width: 80%; max-width: 600px;
-            border: 1px solid var(--pink-accent);
-        }
-        .image-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 20px; }
-        .img-item { width: 100%; height: 100px; object-fit: cover; cursor: pointer; border-radius: 8px; }
+        .modal-content { background: #1a1a1a; padding: 25px; border-radius: 15px; width: 90%; max-width: 500px; border: 1px solid var(--pink); }
+        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 15px; }
+        .grid img { width: 100%; height: 80px; object-fit: cover; border-radius: 5px; cursor: pointer; transition: 0.2s; }
+        .grid img:hover { transform: scale(1.1); border: 2px solid var(--pink); }
 
-        /* SVG para Flechas */
-        #svg-canvas { position: absolute; pointer-events: none; width: 100%; height: 100%; z-index: 5; }
+        input[type="text"] { width: 100%; padding: 10px; border-radius: 5px; border: none; margin-bottom: 10px; }
     </style>
 </head>
 <body>
 
     <div class="sidebar" id="sidebar">
-        <div class="toggle-btn" onclick="toggleSidebar()"><i class="fas fa-bars"></i></div>
-        <h1><i class="fas fa-paint-brush"></i> PINK</h1>
+        <div class="toggle-btn" onclick="toggleSidebar()"><i class="fas fa-chevron-left"></i></div>
+        <h2 style="color:var(--pink)">PINK PRO</h2>
         
-        <div class="tool-section">
-            <label>Dibujo</label>
-            <div class="btn-tool">
-                <i class="fas fa-palette"></i>
-                <input type="color" id="colorPicker" value="#ffb7ff" style="border:none; width:30px; background:none;">
-            </div>
-            <div class="btn-tool">
-                <i class="fas fa-arrows-alt-h"></i>
-                <input type="range" id="lineWidth" min="1" max="15" value="3">
-            </div>
-            <button class="btn-tool" onclick="clearAll()"><i class="fas fa-trash"></i> Borrar Todo</button>
-        </div>
-
-        <div class="tool-section">
-            <label>Componentes</label>
-            <button class="btn-tool" onclick="addNote()"><i class="fas fa-sticky-note"></i> Nueva Nota</button>
-            <button class="btn-tool" onclick="addNode()"><i class="fas fa-project-diagram"></i> Esquema</button>
-            <button class="btn-tool" onclick="openImageModal()"><i class="fab fa-google"></i> Buscar Imagen</button>
-        </div>
+        <label style="font-size: 12px; opacity: 0.6;">DIBUJO</label>
+        <div class="btn-tool"><i class="fas fa-palette"></i><input type="color" id="colorPicker" value="#ffb7ff" style="background:none; border:none;"></div>
+        <input type="range" id="lineWidth" min="1" max="15" value="3" style="width:100%">
+        
+        <hr style="opacity: 0.2; margin: 20px 0;">
+        
+        <button class="btn-tool" onclick="addNote()"><i class="fas fa-sticky-note"></i> Nota</button>
+        <button class="btn-tool" onclick="addNode()"><i class="fas fa-project-diagram"></i> Esquema</button>
+        <button class="btn-tool" onclick="openModal()"><i class="fab fa-google"></i> Imágenes</button>
+        <button class="btn-tool" onclick="clearCanvas()" style="margin-top: 50px; background: rgba(255,0,0,0.2);"><i class="fas fa-trash"></i> Limpiar</button>
     </div>
 
     <div id="viewport">
@@ -158,13 +93,13 @@
         <canvas id="board"></canvas>
     </div>
 
-    <div class="modal" id="imageModal">
+    <div class="modal" id="imgModal">
         <div class="modal-content">
-            <h3>Buscar en Google Imágenes</h3>
-            <input type="text" id="imgSearch" placeholder="Ej. Tecnología..." style="width:70%; padding:10px;">
-            <button onclick="searchImages()" style="padding:10px;">Buscar</button>
-            <div class="image-grid" id="imageResults"></div>
-            <button onclick="closeModal()" style="margin-top:20px;">Cerrar</button>
+            <h3>Buscar Imágenes</h3>
+            <input type="text" id="imgQuery" placeholder="Ej: Abstract, tech, nature...">
+            <button class="btn-tool" onclick="searchImages()" style="justify-content: center;">Buscar</button>
+            <div class="grid" id="results"></div>
+            <button onclick="closeModal()" style="background:none; color:white; border:none; margin-top:15px; cursor:pointer;">Cerrar</button>
         </div>
     </div>
 
@@ -172,144 +107,142 @@
         const canvas = document.getElementById('board');
         const ctx = canvas.getContext('2d');
         const viewport = document.getElementById('viewport');
-        const svgCanvas = document.getElementById('svg-canvas');
+        const svg = document.getElementById('svg-canvas');
+        let connections = [];
         let drawing = false;
-        let connections = []; // Guardar conexiones {from: el, to: el}
 
         function toggleSidebar() { document.getElementById('sidebar').classList.toggle('collapsed'); }
 
-        function resize() {
+        function resizeCanvas() {
             canvas.width = viewport.clientWidth;
             canvas.height = viewport.clientHeight;
-            drawConnections();
+            updateLines();
         }
-        window.addEventListener('resize', resize);
-        setTimeout(resize, 100);
+        window.addEventListener('resize', resizeCanvas);
+        setTimeout(resizeCanvas, 100);
 
-        // Dibujo
-        canvas.addEventListener('mousedown', () => drawing = true);
-        canvas.addEventListener('mouseup', () => { drawing = false; ctx.beginPath(); });
-        canvas.addEventListener('mousemove', (e) => {
+        // Dibujo a mano alzada
+        canvas.onmousedown = () => drawing = true;
+        canvas.onmouseup = () => { drawing = false; ctx.beginPath(); };
+        canvas.onmousemove = (e) => {
             if(!drawing) return;
-            const rect = canvas.getBoundingClientRect();
             ctx.lineWidth = document.getElementById('lineWidth').value;
-            ctx.lineCap = 'round';
             ctx.strokeStyle = document.getElementById('colorPicker').value;
-            ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
-            ctx.stroke();
-            ctx.beginPath();
-            ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
-        });
+            ctx.lineCap = 'round';
+            ctx.lineTo(e.clientX - viewport.offsetLeft, e.clientY);
+            ctx.stroke(); ctx.beginPath(); ctx.moveTo(e.clientX - viewport.offsetLeft, e.clientY);
+        };
 
-        // NOTAS
-        function addNote() {
-            createEl('note', 'Escribe tu nota aquí...', 100, 100);
-        }
-
-        // ESQUEMAS (NODOS)
-        function addNode(parent = null) {
-            let x = 100, y = 100;
-            if(parent) {
-                const rect = parent.getBoundingClientRect();
-                x = parent.offsetLeft;
-                y = parent.offsetTop + 120; // Aparece abajo
-            }
-            const newNode = createEl('node', 'Nuevo Concepto', x, y);
-            
-            if(parent) {
-                connections.push({from: parent, to: newNode});
-                drawConnections();
-            }
-
-            const btn = document.createElement('button');
-            btn.className = 'node-btn';
-            btn.innerHTML = '<i class="fas fa-arrow-down"></i> Nodo Hijo';
-            btn.onclick = (e) => { e.stopPropagation(); addNode(newNode); };
-            newNode.appendChild(btn);
-        }
-
-        function createEl(type, text, x, y) {
+        // Crear Elementos (Notas/Nodos)
+        function createBox(type, x, y, parent = null) {
             const el = document.createElement('div');
             el.className = `element ${type}`;
             el.style.left = x + 'px';
             el.style.top = y + 'px';
-            el.innerHTML = `<i class="fas fa-times" style="float:right; cursor:pointer;" onclick="this.parentElement.remove()"></i>
-                            <div class="editable" contenteditable="true">${text}</div>`;
+            
+            el.innerHTML = `
+                <div class="el-header">
+                    <i class="fas fa-compress" onclick="minimize(this)"></i>
+                    <i class="fas fa-times" onclick="this.closest('.element').remove(); updateLines();"></i>
+                </div>
+                <div class="el-body" contenteditable="true">Escribe aquí...</div>
+                ${type === 'node' ? `<button onclick="addChild(this)" style="font-size:10px; border:none; background:var(--pink); cursor:pointer;">+ Hijo</button>` : ''}
+            `;
+
             viewport.appendChild(el);
             makeDraggable(el);
+            
+            // Observar cambios de tamaño para actualizar flechas
+            new ResizeObserver(() => updateLines()).observe(el);
+
+            if(parent) {
+                connections.push({from: parent, to: el});
+                updateLines();
+            }
             return el;
         }
 
+        function addNote() { createBox('note', 50, 50); }
+        function addNode() { createBox('node', 50, 200); }
+        function addChild(btn) {
+            const parent = btn.closest('.element');
+            createBox('node', parent.offsetLeft, parent.offsetTop + 150, parent);
+        }
+
         function makeDraggable(el) {
-            let p1 = 0, p2 = 0, p3 = 0, p4 = 0;
-            el.onmousedown = (e) => {
-                if(e.target.classList.contains('editable') || e.target.tagName === 'BUTTON') return;
+            let p1, p2, p3, p4;
+            el.querySelector('.el-header').onmousedown = (e) => {
                 p3 = e.clientX; p4 = e.clientY;
-                document.onmouseup = () => { document.onmouseup = null; document.onmousemove = null; };
                 document.onmousemove = (e) => {
                     p1 = p3 - e.clientX; p2 = p4 - e.clientY;
                     p3 = e.clientX; p4 = e.clientY;
                     el.style.top = (el.offsetTop - p2) + "px";
                     el.style.left = (el.offsetLeft - p1) + "px";
-                    drawConnections();
+                    updateLines();
                 };
+                document.onmouseup = () => document.onmousemove = null;
             };
         }
 
-        // Flechas dinámicas
-        function drawConnections() {
-            svgCanvas.innerHTML = '';
-            connections.forEach(conn => {
-                if(!conn.from.parentElement || !conn.to.parentElement) return;
-                const f = conn.from, t = conn.to;
+        function minimize(btn) {
+            const body = btn.closest('.element').querySelector('.el-body');
+            body.style.display = body.style.display === 'none' ? 'block' : 'none';
+        }
+
+        // Flechas
+        function updateLines() {
+            svg.innerHTML = '';
+            connections.forEach(c => {
+                if(!c.from.parentElement || !c.to.parentElement) return;
                 const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-                line.setAttribute('x1', f.offsetLeft + f.offsetWidth/2);
-                line.setAttribute('y1', f.offsetTop + f.offsetHeight);
-                line.setAttribute('x2', t.offsetLeft + t.offsetWidth/2);
-                line.setAttribute('y2', t.offsetTop);
+                line.setAttribute('x1', c.from.offsetLeft + c.from.offsetWidth / 2);
+                line.setAttribute('y1', c.from.offsetTop + c.from.offsetHeight);
+                line.setAttribute('x2', c.to.offsetLeft + c.to.offsetWidth / 2);
+                line.setAttribute('y2', c.to.offsetTop);
                 line.setAttribute('stroke', '#ffb7ff');
                 line.setAttribute('stroke-width', '2');
-                svgCanvas.appendChild(line);
+                svg.appendChild(line);
             });
         }
 
-        // Imágenes
-        function openImageModal() { document.getElementById('imageModal').style.display = 'flex'; }
-        function closeModal() { document.getElementById('imageModal').style.display = 'none'; }
+        // Imágenes Reales (Picsum)
+        function openModal() { document.getElementById('imgModal').style.display = 'flex'; }
+        function closeModal() { document.getElementById('imgModal').style.display = 'none'; }
         
         function searchImages() {
-            const query = document.getElementById('imgSearch').value;
-            const grid = document.getElementById('imageResults');
-            grid.innerHTML = 'Cargando...';
-            // Simulamos resultados de Google con Unsplash
+            const q = document.getElementById('imgQuery').value;
+            const res = document.getElementById('results');
+            res.innerHTML = 'Buscando...';
             setTimeout(() => {
-                grid.innerHTML = '';
+                res.innerHTML = '';
                 for(let i=0; i<6; i++) {
+                    const id = Math.floor(Math.random() * 1000);
+                    const url = `https://picsum.photos/id/${id}/400/300`;
                     const img = document.createElement('img');
-                    img.src = `https://source.unsplash.com/featured/?${query}&sig=${i}`;
-                    img.className = 'img-item';
-                    img.onclick = () => { insertImage(img.src); closeModal(); };
-                    grid.appendChild(img);
+                    img.src = url;
+                    img.onclick = () => { insertImage(url); closeModal(); };
+                    res.appendChild(img);
                 }
             }, 500);
         }
 
         function insertImage(src) {
-            const img = document.createElement('img');
-            img.src = src;
-            img.className = 'element';
-            img.style.width = '150px';
-            img.style.left = '200px';
-            img.style.top = '200px';
-            viewport.appendChild(img);
-            makeDraggable(img);
+            const el = document.createElement('div');
+            el.className = 'element';
+            el.style.padding = '0';
+            el.innerHTML = `
+                <div class="el-header"><i class="fas fa-times" onclick="this.closest('.element').remove()"></i></div>
+                <img src="${src}" style="width:100%; height:100%; object-fit:cover;">
+            `;
+            viewport.appendChild(el);
+            makeDraggable(el);
+            new ResizeObserver(() => updateLines()).observe(el);
         }
 
-        function clearAll() {
+        function clearCanvas() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            document.querySelectorAll('.element').forEach(el => el.remove());
-            connections = [];
-            drawConnections();
+            document.querySelectorAll('.element').forEach(e => e.remove());
+            connections = []; updateLines();
         }
     </script>
 </body>
