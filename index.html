@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pink Board</title>
+    <style>
+        /* Estilos Generales y Fondo Degradado */
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #2c003e 0%, #002d5e 100%); /* Azul/Violeta oscuro */
+            overflow: hidden;
+            color: white;
+        }
+
+        /* Barra de Herramientas */
+        .toolbar {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 15px;
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            justify-content: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 24px;
+            color: #ffb7ff; /* Tono rosado para el nombre Pink */
+            text-shadow: 0 0 10px rgba(255, 183, 255, 0.5);
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        input[type="color"], input[type="range"] {
+            cursor: pointer;
+        }
+
+        button {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 5px;
+            background: #ff00ff;
+            color: white;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        button:hover {
+            background: #d400d4;
+            transform: scale(1.05);
+        }
+
+        /* Área de la Pizarra */
+        canvas {
+            flex-grow: 1;
+            cursor: crosshair;
+            background: transparent;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="toolbar">
+        <h1>PINK</h1>
+        <div class="controls">
+            <label>Color:</label>
+            <input type="color" id="colorPicker" value="#ffffff">
+            
+            <label>Grosor:</label>
+            <input type="range" id="lineWidth" min="1" max="50" value="5">
+            
+            <button id="clearBtn">Limpiar Pizarra</button>
+            <button id="eraserBtn">Borrador</button>
+        </div>
+    </div>
+
+    <canvas id="board"></canvas>
+
+    <script>
+        const canvas = document.getElementById('board');
+        const ctx = canvas.getContext('2d');
+        const colorPicker = document.getElementById('colorPicker');
+        const lineWidthInput = document.getElementById('lineWidth');
+        const clearBtn = document.getElementById('clearBtn');
+        const eraserBtn = document.getElementById('eraserBtn');
+
+        // Ajustar tamaño del canvas
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight - document.querySelector('.toolbar').offsetHeight;
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // Variables de dibujo
+        let drawing = false;
+        let lastColor = '#ffffff';
+
+        function startPosition(e) {
+            drawing = true;
+            draw(e);
+        }
+
+        function finishedPosition() {
+            drawing = false;
+            ctx.beginPath(); // Reinicia el trazo para que no se unan puntos lejanos
+        }
+
+        function draw(e) {
+            if (!drawing) return;
+
+            ctx.lineWidth = lineWidthInput.value;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.strokeStyle = colorPicker.value;
+
+            // Obtener coordenadas correctas (mouse o touch)
+            const x = e.clientX || e.touches[0].clientX;
+            const y = (e.clientY || e.touches[0].clientY) - canvas.offsetTop;
+
+            ctx.lineTo(x, y);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+        }
+
+        // Eventos de Mouse
+        canvas.addEventListener('mousedown', startPosition);
+        canvas.addEventListener('mouseup', finishedPosition);
+        canvas.addEventListener('mousemove', draw);
+
+        // Eventos de Touch (para tablets/móviles)
+        canvas.addEventListener('touchstart', (e) => { e.preventDefault(); startPosition(e); });
+        canvas.addEventListener('touchend', finishedPosition);
+        canvas.addEventListener('touchmove', (e) => { e.preventDefault(); draw(e); });
+
+        // Botones
+        clearBtn.addEventListener('click', () => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        });
+
+        eraserBtn.addEventListener('click', () => {
+            // El borrador simplemente pone el color transparente o el del fondo
+            // Para este diseño, usaremos el color de fondo oscuro para simular borrado
+            colorPicker.value = "#2c003e"; 
+        });
+
+    </script>
+</body>
+</html>
