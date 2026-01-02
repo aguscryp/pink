@@ -3,161 +3,249 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pink Board</title>
+    <title>Pink - Workspace</title>
     <style>
-        /* Estilos Generales y Fondo Degradado */
+        :root {
+            --bg-gradient: linear-gradient(135deg, #2c003e 0%, #002d5e 100%);
+            --panel-bg: rgba(255, 255, 255, 0.1);
+            --accent: #ffb7ff;
+        }
+
         body {
             margin: 0;
-            padding: 0;
+            display: flex;
+            height: 100vh;
+            font-family: 'Segoe UI', sans-serif;
+            background: var(--bg-gradient);
+            color: white;
+            overflow: hidden;
+        }
+
+        /* Panel Lateral (Responsivo) */
+        .sidebar {
+            width: 250px;
+            background: var(--panel-bg);
+            backdrop-filter: blur(15px);
+            border-right: 1px solid rgba(255,255,255,0.1);
             display: flex;
             flex-direction: column;
-            height: 100vh;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #2c003e 0%, #002d5e 100%); /* Azul/Violeta oscuro */
-            overflow: hidden;
-            color: white;
-        }
-
-        /* Barra de Herramientas */
-        .toolbar {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            padding: 15px;
-            display: flex;
+            padding: 20px;
             gap: 20px;
-            align-items: center;
-            justify-content: center;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            z-index: 100;
         }
 
-        h1 {
-            margin: 0;
-            font-size: 24px;
-            color: #ffb7ff; /* Tono rosado para el nombre Pink */
-            text-shadow: 0 0 10px rgba(255, 183, 255, 0.5);
-        }
+        .sidebar h1 { color: var(--accent); margin: 0 0 10px 0; font-size: 1.5rem; text-align: center; }
 
-        .controls {
+        .tool-group {
             display: flex;
-            gap: 15px;
-            align-items: center;
+            flex-direction: column;
+            gap: 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding-bottom: 15px;
         }
 
-        input[type="color"], input[type="range"] {
-            cursor: pointer;
-        }
+        label { font-size: 0.8rem; opacity: 0.8; }
 
         button {
-            padding: 8px 15px;
+            padding: 10px;
             border: none;
-            border-radius: 5px;
-            background: #ff00ff;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.15);
             color: white;
             cursor: pointer;
             transition: 0.3s;
+            text-align: left;
         }
 
-        button:hover {
-            background: #d400d4;
-            transform: scale(1.05);
-        }
+        button:hover { background: var(--accent); color: #000; }
 
-        /* Área de la Pizarra */
-        canvas {
+        /* Lienzo y Contenedor */
+        #canvas-container {
             flex-grow: 1;
+            position: relative;
+            overflow: hidden;
+        }
+
+        canvas {
+            display: block;
             cursor: crosshair;
-            background: transparent;
+        }
+
+        /* Elementos Dinámicos (Notas y Esquemas) */
+        .draggable {
+            position: absolute;
+            padding: 15px;
+            min-width: 150px;
+            border-radius: 8px;
+            cursor: move;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+            animation: fadeIn 0.3s;
+        }
+
+        .note { background: #fff3a0; color: #333; }
+        .node { background: var(--accent); color: #000; border: 2px solid #fff; font-weight: bold; }
+
+        .close-btn {
+            position: absolute;
+            top: 2px;
+            right: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Responsividad para móviles */
+        @media (max-width: 768px) {
+            body { flex-direction: column; }
+            .sidebar {
+                width: 100%;
+                height: auto;
+                flex-direction: row;
+                overflow-x: auto;
+                padding: 10px;
+                border-right: none;
+                border-bottom: 1px solid rgba(255,255,255,0.1);
+            }
+            .sidebar h1, .tool-group label { display: none; }
+            .tool-group { flex-direction: row; border-bottom: none; padding-bottom: 0; }
         }
     </style>
 </head>
 <body>
 
-    <div class="toolbar">
+    <div class="sidebar">
         <h1>PINK</h1>
-        <div class="controls">
-            <label>Color:</label>
+        
+        <div class="tool-group">
+            <label>Pincel</label>
             <input type="color" id="colorPicker" value="#ffffff">
-            
-            <label>Grosor:</label>
-            <input type="range" id="lineWidth" min="1" max="50" value="5">
-            
-            <button id="clearBtn">Limpiar Pizarra</button>
-            <button id="eraserBtn">Borrador</button>
+            <input type="range" id="lineWidth" min="1" max="20" value="3">
+            <button onclick="clearCanvas()">Borrar Todo</button>
+        </div>
+
+        <div class="tool-group">
+            <label>Insertar</label>
+            <button onclick="addNote()">+ Nota</button>
+            <button onclick="addNode()">+ Esquema</button>
+            <button onclick="searchImage()">+ Imagen (Google)</button>
         </div>
     </div>
 
-    <canvas id="board"></canvas>
+    <div id="canvas-container">
+        <canvas id="board"></canvas>
+    </div>
 
     <script>
         const canvas = document.getElementById('board');
         const ctx = canvas.getContext('2d');
-        const colorPicker = document.getElementById('colorPicker');
-        const lineWidthInput = document.getElementById('lineWidth');
-        const clearBtn = document.getElementById('clearBtn');
-        const eraserBtn = document.getElementById('eraserBtn');
-
-        // Ajustar tamaño del canvas
-        function resizeCanvas() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight - document.querySelector('.toolbar').offsetHeight;
-        }
-
-        window.addEventListener('resize', resizeCanvas);
-        resizeCanvas();
-
-        // Variables de dibujo
+        const container = document.getElementById('canvas-container');
+        
         let drawing = false;
-        let lastColor = '#ffffff';
 
-        function startPosition(e) {
-            drawing = true;
-            draw(e);
+        // Ajuste de tamaño
+        function resize() {
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
         }
+        window.addEventListener('resize', resize);
+        resize();
 
-        function finishedPosition() {
-            drawing = false;
-            ctx.beginPath(); // Reinicia el trazo para que no se unan puntos lejanos
-        }
-
-        function draw(e) {
-            if (!drawing) return;
-
-            ctx.lineWidth = lineWidthInput.value;
-            ctx.lineCap = 'round';
-            ctx.lineJoin = 'round';
-            ctx.strokeStyle = colorPicker.value;
-
-            // Obtener coordenadas correctas (mouse o touch)
-            const x = e.clientX || e.touches[0].clientX;
-            const y = (e.clientY || e.touches[0].clientY) - canvas.offsetTop;
-
-            ctx.lineTo(x, y);
-            ctx.stroke();
-            ctx.beginPath();
-            ctx.moveTo(x, y);
-        }
-
-        // Eventos de Mouse
-        canvas.addEventListener('mousedown', startPosition);
-        canvas.addEventListener('mouseup', finishedPosition);
+        // Lógica de Dibujo
+        canvas.addEventListener('mousedown', () => drawing = true);
+        canvas.addEventListener('mouseup', () => { drawing = false; ctx.beginPath(); });
         canvas.addEventListener('mousemove', draw);
 
-        // Eventos de Touch (para tablets/móviles)
-        canvas.addEventListener('touchstart', (e) => { e.preventDefault(); startPosition(e); });
-        canvas.addEventListener('touchend', finishedPosition);
-        canvas.addEventListener('touchmove', (e) => { e.preventDefault(); draw(e); });
+        function draw(e) {
+            if(!drawing) return;
+            ctx.lineWidth = document.getElementById('lineWidth').value;
+            ctx.lineCap = 'round';
+            ctx.strokeStyle = document.getElementById('colorPicker').value;
 
-        // Botones
-        clearBtn.addEventListener('click', () => {
+            ctx.lineTo(e.clientX - canvas.offsetLeft, e.clientY - canvas.offsetTop);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(e.clientX - canvas.offsetLeft, e.clientY - canvas.offsetTop);
+        }
+
+        function clearCanvas() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-        });
+        }
 
-        eraserBtn.addEventListener('click', () => {
-            // El borrador simplemente pone el color transparente o el del fondo
-            // Para este diseño, usaremos el color de fondo oscuro para simular borrado
-            colorPicker.value = "#2c003e"; 
-        });
+        // Crear Elementos Movibles (Notas y Esquemas)
+        function makeDraggable(el) {
+            let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+            el.onmousedown = dragMouseDown;
 
+            function dragMouseDown(e) {
+                if (e.target.className === 'close-btn') return;
+                e.preventDefault();
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                document.onmouseup = closeDragElement;
+                document.onmousemove = elementDrag;
+            }
+
+            function elementDrag(e) {
+                pos1 = pos3 - e.clientX;
+                pos2 = pos4 - e.clientY;
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                el.style.top = (el.offsetTop - pos2) + "px";
+                el.style.left = (el.offsetLeft - pos1) + "px";
+            }
+
+            function closeDragElement() {
+                document.onmouseup = null;
+                document.onmousemove = null;
+            }
+        }
+
+        function addNote() {
+            const note = document.createElement('div');
+            note.className = 'draggable note';
+            note.innerHTML = `<span class="close-btn" onclick="this.parentElement.remove()">×</span>
+                             <div contenteditable="true">Nueva nota...</div>`;
+            note.style.top = '100px';
+            note.style.left = '100px';
+            container.appendChild(note);
+            makeDraggable(note);
+        }
+
+        function addNode() {
+            const node = document.createElement('div');
+            node.className = 'draggable node';
+            node.innerHTML = `<span class="close-btn" onclick="this.parentElement.remove()">×</span>
+                             <div contenteditable="true">Concepto</div>
+                             <button style="margin-top:5px; font-size:10px;" onclick="addConnectedNode(this.parentElement)">+ Flecha</button>`;
+            node.style.top = '200px';
+            node.style.left = '300px';
+            container.appendChild(node);
+            makeDraggable(node);
+        }
+
+        function addConnectedNode(parent) {
+            // Lógica simplificada: crea un nuevo nodo al lado
+            addNode();
+            // Aquí se podría dibujar una flecha en el canvas uniendo parent con el nuevo nodo
+            alert("Nodo creado. ¡Muévelo para organizar tu esquema!");
+        }
+
+        function searchImage() {
+            const query = prompt("Busca una imagen (Ej: 'gato' o 'tecnología'):");
+            if(query) {
+                // Simulación de inserción (Usa Unsplash para evitar problemas de API de Google complejos)
+                const imgUrl = `https://source.unsplash.com/featured/?${query}`;
+                const img = document.createElement('img');
+                img.src = imgUrl;
+                img.className = 'draggable';
+                img.style.width = '200px';
+                img.style.top = '150px';
+                img.style.left = '150px';
+                container.appendChild(img);
+                makeDraggable(img);
+            }
+        }
     </script>
 </body>
 </html>
