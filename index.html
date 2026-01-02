@@ -3,60 +3,75 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pink - Miro Experience</title>
+    <title>Pink Ultra - Advanced Transformation</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
-            --bg: #080812;
+            --bg: #05050a;
             --pink: #ff00ff;
             --blue: #00d2ff;
-            --node-bg: rgba(255, 255, 255, 0.08);
+            --glass: rgba(255, 255, 255, 0.07);
         }
 
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: var(--bg); color: white; font-family: 'Inter', sans-serif; overflow: hidden; }
 
-        /* Lienzo */
-        #viewport { width: 100vw; height: 100vh; cursor: grab; background: radial-gradient(circle, #1a1a3a 0%, #080812 100%); }
-        #canvas-wrapper { position: absolute; width: 20000px; height: 20000px; transform-origin: 0 0; will-change: transform; }
-        .grid { position: absolute; inset: 0; background-image: radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px); background-size: 40px 40px; pointer-events: none; }
+        /* Lienzo Infinito */
+        #viewport { width: 100vw; height: 100vh; cursor: grab; background: radial-gradient(circle at center, #11112b 0%, #05050a 100%); }
+        #canvas-wrapper { position: absolute; width: 30000px; height: 30000px; transform-origin: 0 0; will-change: transform; }
+        .grid { position: absolute; inset: 0; background-image: radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px); background-size: 50px 50px; pointer-events: none; }
 
-        /* Elementos Estilo Miro */
+        /* Elementos (Nodos/Notas) */
         .element {
-            position: absolute; min-width: 140px; min-height: 80px;
-            background: var(--node-bg); backdrop-filter: blur(10px);
-            border: 2px solid rgba(255,255,255,0.1); border-radius: 12px;
+            position: absolute; min-width: 100px; min-height: 50px;
+            background: var(--glass); backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.2); border-radius: 8px;
             display: flex; align-items: center; justify-content: center;
-            cursor: move; box-shadow: 0 10px 20px rgba(0,0,0,0.4);
-            transition: border 0.2s, box-shadow 0.2s;
+            cursor: move; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
         .element:hover { border-color: var(--blue); }
-        .el-content { padding: 15px; outline: none; text-align: center; font-size: 14px; width: 100%; }
+        .el-content { padding: 10px; outline: none; text-align: center; font-size: 14px; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; overflow: hidden; }
 
-        /* Puntos de conexión (Miro style) */
+        /* Manejadores de Redimensionado (Handles) */
+        .handle {
+            position: absolute; width: 8px; height: 8px;
+            background: white; border: 1px solid var(--blue);
+            display: none; z-index: 30;
+        }
+        .element:hover .handle { display: block; }
+        
+        .h-nw { top: -4px; left: -4px; cursor: nwse-resize; }
+        .h-ne { top: -4px; right: -4px; cursor: nesw-resize; }
+        .h-sw { bottom: -4px; left: -4px; cursor: nesw-resize; }
+        .h-se { bottom: -4px; right: -4px; cursor: nwse-resize; }
+        .h-n { top: -4px; left: 50%; transform: translateX(-50%); cursor: ns-resize; }
+        .h-s { bottom: -4px; left: 50%; transform: translateX(-50%); cursor: ns-resize; }
+        .h-e { right: -4px; top: 50%; transform: translateY(-50%); cursor: ew-resize; }
+        .h-w { left: -4px; top: 50%; transform: translateY(-50%); cursor: ew-resize; }
+
+        /* Puntos de Conexión */
         .conn-dot {
-            position: absolute; width: 12px; height: 12px;
+            position: absolute; width: 14px; height: 14px;
             background: var(--blue); border-radius: 50%;
-            display: none; cursor: crosshair; z-index: 20;
-            box-shadow: 0 0 10px var(--blue);
+            display: none; cursor: crosshair; z-index: 40;
+            box-shadow: 0 0 10px var(--blue); border: 2px solid white;
         }
         .element:hover .conn-dot { display: block; }
-        
-        .dot-top { top: -6px; left: 50%; transform: translateX(-50%); }
-        .dot-bottom { bottom: -6px; left: 50%; transform: translateX(-50%); }
-        .dot-left { left: -6px; top: 50%; transform: translateY(-50%); }
-        .dot-right { right: -6px; top: 50%; transform: translateY(-50%); }
+        .dot-top { top: -20px; left: 50%; transform: translateX(-50%); }
+        .dot-bottom { bottom: -20px; left: 50%; transform: translateX(-50%); }
+        .dot-left { left: -20px; top: 50%; transform: translateY(-50%); }
+        .dot-right { right: -20px; top: 50%; transform: translateY(-50%); }
 
-        /* Herramientas */
+        /* Interfaz */
         .ui-dock {
-            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
-            background: rgba(10, 10, 25, 0.9); padding: 10px 20px;
+            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+            background: rgba(10, 10, 20, 0.9); padding: 12px 25px;
             border-radius: 50px; border: 1px solid var(--pink);
             display: flex; gap: 20px; align-items: center; z-index: 1000;
         }
-        .btn { background: none; border: none; color: white; cursor: pointer; font-size: 1.2rem; transition: 0.2s; }
-        .btn:hover { color: var(--pink); transform: scale(1.2); }
+        .btn { background: none; border: none; color: white; cursor: pointer; font-size: 1.3rem; transition: 0.2s; }
+        .btn:hover { color: var(--pink); transform: scale(1.1); }
+        .active { color: var(--blue) !important; text-shadow: 0 0 10px var(--blue); }
 
-        /* Capas visuales */
         #svg-layer { position: absolute; inset: 0; pointer-events: none; z-index: 1; }
         canvas#draw-layer { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
         canvas#draw-layer.active { pointer-events: all; cursor: crosshair; }
@@ -65,12 +80,13 @@
 <body>
 
     <div class="ui-dock">
-        <span style="color:var(--pink); font-weight:bold; letter-spacing:2px;">PINK PRO</span>
-        <button class="btn" onclick="addBaseNode()" title="Nuevo Nodo"><i class="fas fa-plus-square"></i></button>
-        <button class="btn" id="pen-btn" onclick="toggleDraw()"><i class="fas fa-pen"></i></button>
+        <span style="color:var(--pink); font-weight:bold; letter-spacing:1px;">PINK PRO</span>
+        <button class="btn" onclick="addNode()" title="Nodo"><i class="fas fa-vector-square"></i></button>
+        <button class="btn" onclick="addNote()" title="Nota"><i class="fas fa-sticky-note"></i></button>
+        <button class="btn" id="pen-btn" onclick="toggleDraw()"><i class="fas fa-paint-brush"></i></button>
         <input type="color" id="pColor" value="#ff00ff" style="border:none; background:none; width:30px; cursor:pointer;">
-        <button class="btn" onclick="document.getElementById('img-in').click()"><i class="fas fa-image"></i></button>
-        <button class="btn" onclick="location.reload()"><i class="fas fa-trash"></i></button>
+        <button class="btn" onclick="document.getElementById('img-in').click()"><i class="fas fa-file-image"></i></button>
+        <button class="btn" onclick="location.reload()" title="Reset"><i class="fas fa-sync"></i></button>
     </div>
 
     <input type="file" id="img-in" hidden accept="image/*">
@@ -90,137 +106,139 @@
         const drawCanvas = document.getElementById('draw-layer');
         const ctx = drawCanvas.getContext('2d');
 
-        let scale = 1, posX = -8000, posY = -8000;
+        let scale = 1, posX = -14000, posY = -14000;
         let isPanning = false, isDrawing = false, canDraw = false;
         let connections = [];
 
         function init() {
-            drawCanvas.width = 20000; drawCanvas.height = 20000;
+            drawCanvas.width = 30000; drawCanvas.height = 30000;
             update();
         }
 
-        // --- ZOOM & PAN (RUEDA Y ARRASTRE) ---
+        // --- NAVEGACIÓN (ZOOM Y PAN) ---
         viewport.onwheel = (e) => {
             e.preventDefault();
             const factor = e.deltaY > 0 ? 0.9 : 1.1;
             const mouseX = e.clientX, mouseY = e.clientY;
             const wx = (mouseX - posX) / scale, wy = (mouseY - posY) / scale;
-            scale = Math.min(Math.max(0.1, scale * factor), 5);
+            scale = Math.min(Math.max(0.05, scale * factor), 5);
             posX = mouseX - wx * scale; posY = mouseY - wy * scale;
             update();
         };
 
-        viewport.onmousedown = (e) => { if(!canDraw) isPanning = true; };
-        window.onmousemove = (e) => {
-            if(isPanning) { posX += e.movementX; posY += e.movementY; update(); }
-        };
+        viewport.onmousedown = (e) => { if(!canDraw && e.target === viewport || e.target === wrapper) isPanning = true; };
+        window.onmousemove = (e) => { if(isPanning) { posX += e.movementX; posY += e.movementY; update(); } };
         window.onmouseup = () => isPanning = false;
-
         function update() { wrapper.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`; }
 
-        // --- CREACIÓN DE NODOS ---
-        function addBaseNode() {
-            createNode((Math.abs(posX) + window.innerWidth/2)/scale, (Math.abs(posY) + window.innerHeight/2)/scale);
-        }
+        // --- CREACIÓN ---
+        function addNode() { createEl('node', 'Nodo'); }
+        function addNote() { createEl('note', 'Nota Adhesiva', '#fff9c4'); }
 
-        function createNode(x, y, parent = null) {
+        function createEl(type, text, bgColor = null) {
             const el = document.createElement('div');
             el.className = 'element';
-            el.style.left = x + 'px'; el.style.top = y + 'px';
+            if(bgColor) { el.style.background = bgColor; el.style.color = '#333'; }
+            el.style.left = (Math.abs(posX) + window.innerWidth/2)/scale + 'px';
+            el.style.top = (Math.abs(posY) + window.innerHeight/2)/scale + 'px';
+            el.style.width = '200px'; el.style.height = '120px';
+
             el.innerHTML = `
-                <div class="conn-dot dot-top" onclick="spawnChild(this, 'top')"></div>
-                <div class="conn-dot dot-right" onclick="spawnChild(this, 'right')"></div>
-                <div class="conn-dot dot-bottom" onclick="spawnChild(this, 'bottom')"></div>
-                <div class="conn-dot dot-left" onclick="spawnChild(this, 'left')"></div>
-                <div class="el-content" contenteditable="true">Nuevo Nodo</div>
+                <div class="handle h-nw" data-handle="nw"></div><div class="handle h-ne" data-handle="ne"></div>
+                <div class="handle h-sw" data-handle="sw"></div><div class="handle h-se" data-handle="se"></div>
+                <div class="handle h-n" data-handle="n"></div><div class="handle h-s" data-handle="s"></div>
+                <div class="handle h-e" data-handle="e"></div><div class="handle h-w" data-handle="w"></div>
+                <div class="conn-dot dot-top" onclick="spawn(this, 'n')"></div>
+                <div class="conn-dot dot-right" onclick="spawn(this, 'e')"></div>
+                <div class="conn-dot dot-bottom" onclick="spawn(this, 's')"></div>
+                <div class="conn-dot dot-left" onclick="spawn(this, 'w')"></div>
+                <div class="el-content" contenteditable="true">${text}</div>
             `;
+
             wrapper.appendChild(el);
-            makeDraggable(el);
+            attachEvents(el);
             new ResizeObserver(() => updateLines()).observe(el);
-            if(parent) connections.push({from: parent, to: el});
-            updateLines();
             return el;
         }
 
-        function spawnChild(dot, dir) {
-            const parent = dot.parentElement;
-            const offset = 250;
-            let x = parseFloat(parent.style.left);
-            let y = parseFloat(parent.style.top);
-
-            if(dir === 'right') x += offset;
-            else if(dir === 'left') x -= offset;
-            else if(dir === 'top') y -= offset;
-            else if(dir === 'bottom') y += offset;
-
-            createNode(x, y, parent);
+        function spawn(dot, dir) {
+            const p = dot.parentElement;
+            let x = parseFloat(p.style.left), y = parseFloat(p.style.top);
+            const gap = 300;
+            if(dir === 'e') x += gap; else if(dir === 'w') x -= gap;
+            else if(dir === 'n') y -= gap; else if(dir === 's') y += gap;
+            const child = createEl('node', 'Nuevo');
+            child.style.left = x + 'px'; child.style.top = y + 'px';
+            connections.push({from: p, to: child});
+            updateLines();
         }
 
-        function makeDraggable(el) {
-            let sx, sy;
+        // --- TRANSFORMACIÓN (MOVE & RESIZE) ---
+        function attachEvents(el) {
             el.onmousedown = (e) => {
-                if(e.target.contentEditable === "true" || e.target.classList.contains('conn-dot')) return;
+                if(e.target.contentEditable === "true") return;
                 e.stopPropagation();
-                sx = e.clientX; sy = e.clientY;
-                const move = (e) => {
-                    el.style.left = (el.offsetLeft + (e.clientX - sx)/scale) + 'px';
-                    el.style.top = (el.offsetTop + (e.clientY - sy)/scale) + 'px';
-                    sx = e.clientX; sy = e.clientY;
+                const handle = e.target.dataset.handle;
+                const startX = e.clientX, startY = e.clientY;
+                const startW = el.offsetWidth, startH = el.offsetHeight;
+                const startL = el.offsetLeft, startT = el.offsetTop;
+
+                const onMove = (me) => {
+                    const dx = (me.clientX - startX) / scale;
+                    const dy = (me.clientY - startY) / scale;
+
+                    if(!handle) { // MOVER
+                        el.style.left = startL + dx + 'px';
+                        el.style.top = startT + dy + 'px';
+                    } else { // REDIMENSIONAR
+                        if(handle.includes('e')) el.style.width = startW + dx + 'px';
+                        if(handle.includes('s')) el.style.height = startH + dy + 'px';
+                        if(handle.includes('w')) { el.style.width = startW - dx + 'px'; el.style.left = startL + dx + 'px'; }
+                        if(handle.includes('n')) { el.style.height = startH - dy + 'px'; el.style.top = startT + dy + 'px'; }
+                    }
                     updateLines();
                 };
-                const up = () => { window.removeEventListener('mousemove', move); };
-                window.addEventListener('mousemove', move);
-                window.addEventListener('mouseup', up);
+
+                const onUp = () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp); };
+                window.addEventListener('mousemove', onMove);
+                window.addEventListener('mouseup', onUp);
             };
         }
 
         function updateLines() {
             svg.innerHTML = '';
             connections.forEach(c => {
+                if(!c.from.parentElement || !c.to.parentElement) return;
                 const x1 = c.from.offsetLeft + c.from.offsetWidth / 2;
                 const y1 = c.from.offsetTop + c.from.offsetHeight / 2;
                 const x2 = c.to.offsetLeft + c.to.offsetWidth / 2;
                 const y2 = c.to.offsetTop + c.to.offsetHeight / 2;
-                
                 const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-                const d = `M ${x1} ${y1} C ${(x1+x2)/2} ${y1}, ${(x1+x2)/2} ${y2}, ${x2} ${y2}`;
-                path.setAttribute('d', d);
-                path.setAttribute('stroke', '#00d2ff');
-                path.setAttribute('stroke-width', '2');
-                path.setAttribute('fill', 'none');
+                path.setAttribute('d', `M ${x1} ${y1} C ${(x1+x2)/2} ${y1}, ${(x1+x2)/2} ${y2}, ${x2} ${y2}`);
+                path.setAttribute('stroke', '#00d2ff'); path.setAttribute('stroke-width', '2'); path.setAttribute('fill', 'none');
                 svg.appendChild(path);
             });
         }
 
         // --- DIBUJO ---
-        function toggleDraw() {
-            canDraw = !canDraw;
-            document.getElementById('pen-btn').classList.toggle('active');
-            drawCanvas.classList.toggle('active');
-        }
-
-        drawCanvas.onmousedown = (e) => { if(!canDraw) return; isDrawing = true; ctx.beginPath(); };
+        function toggleDraw() { canDraw = !canDraw; document.getElementById('pen-btn').classList.toggle('active'); drawCanvas.classList.toggle('active'); }
+        drawCanvas.onmousedown = () => { if(!canDraw) return; isDrawing = true; ctx.beginPath(); };
         drawCanvas.onmousemove = (e) => {
             if(!isDrawing) return;
-            const rect = drawCanvas.getBoundingClientRect();
-            ctx.lineTo((e.clientX - rect.left)/scale, (e.clientY - rect.top)/scale);
+            const r = drawCanvas.getBoundingClientRect();
+            ctx.lineTo((e.clientX - r.left)/scale, (e.clientY - r.top)/scale);
             ctx.strokeStyle = document.getElementById('pColor').value;
-            ctx.lineWidth = 4 / scale;
-            ctx.lineCap = 'round';
-            ctx.stroke();
+            ctx.lineWidth = 4 / scale; ctx.lineCap = 'round'; ctx.stroke();
         };
         drawCanvas.onmouseup = () => isDrawing = false;
 
-        // --- IMÁGENES ---
+        // --- IMAGEN ---
         document.getElementById('img-in').onchange = (e) => {
             const reader = new FileReader();
             reader.onload = (f) => {
-                const el = document.createElement('div');
-                el.className = 'element';
-                el.style.left = (Math.abs(posX)+200)/scale+'px'; el.style.top = (Math.abs(posY)+200)/scale+'px';
-                el.innerHTML = `<img src="${f.target.result}" style="width:200px; border-radius:10px; pointer-events:none;">`;
-                wrapper.appendChild(el);
-                makeDraggable(el);
+                const el = createEl('node', '');
+                el.style.background = 'none'; el.style.border = 'none';
+                el.innerHTML += `<img src="${f.target.result}" style="width:100%; height:100%; object-fit:contain; pointer-events:none;">`;
             };
             reader.readAsDataURL(e.target.files[0]);
         };
