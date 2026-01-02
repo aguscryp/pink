@@ -3,47 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pink Ultra - Neon Flow</title>
+    <title>Pink Pro - Neon Flow Edition</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
             --bg: #030308;
             --pink: #ff00ff;
             --blue: #00d2ff;
-            --neon-shadow: 0 0 15px rgba(0, 210, 255, 0.5);
+            --neon-glow: 0 0 15px rgba(0, 210, 255, 0.6);
         }
 
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: var(--bg); color: white; font-family: 'Inter', sans-serif; overflow: hidden; }
 
-        /* Lienzo */
+        /* Lienzo Infinito */
         #viewport { width: 100vw; height: 100vh; cursor: grab; background: #050510; }
-        #canvas-wrapper { position: absolute; width: 30000px; height: 30000px; transform-origin: 0 0; }
-        .grid { position: absolute; inset: 0; background-image: radial-gradient(rgba(0, 210, 255, 0.1) 1px, transparent 1px); background-size: 60px 60px; pointer-events: none; }
+        #canvas-wrapper { position: absolute; width: 40000px; height: 40000px; transform-origin: 0 0; }
+        .grid { position: absolute; inset: 0; background-image: radial-gradient(rgba(0, 210, 255, 0.1) 1px, transparent 1px); background-size: 50px 50px; pointer-events: none; }
 
-        /* Elementos Neón */
+        /* Nodos Neón */
         .element {
-            position: absolute; min-width: 120px; min-height: 60px;
-            background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(15px);
-            border: 1px solid rgba(0, 210, 255, 0.3); border-radius: 12px;
+            position: absolute; min-width: 140px; min-height: 70px;
+            background: rgba(255, 255, 255, 0.04); backdrop-filter: blur(15px);
+            border: 1px solid rgba(0, 210, 255, 0.4); border-radius: 12px;
             display: flex; align-items: center; justify-content: center;
             cursor: move; box-shadow: 0 10px 40px rgba(0,0,0,0.8);
-            transition: border 0.3s, box-shadow 0.3s;
+            z-index: 10;
         }
-        .element:hover { border-color: var(--blue); box-shadow: 0 0 20px rgba(0, 210, 255, 0.4); }
-        .el-content { padding: 20px; outline: none; text-align: center; font-size: 15px; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: #e0e0e0; }
+        .element:hover { border-color: var(--blue); box-shadow: var(--neon-glow); }
+        .el-content { 
+            padding: 15px; outline: none; text-align: center; font-size: 14px; 
+            width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
+            cursor: text;
+        }
 
-        /* Manejadores y Conectores */
-        .handle { position: absolute; width: 12px; height: 12px; background: #fff; border: 2px solid var(--blue); border-radius: 2px; display: none; z-index: 100; }
-        .element:hover .handle { display: block; }
-        .h-nw { top: -6px; left: -6px; cursor: nwse-resize; }
-        .h-ne { top: -6px; right: -6px; cursor: nesw-resize; }
-        .h-sw { bottom: -6px; left: -6px; cursor: nesw-resize; }
-        .h-se { bottom: -6px; right: -6px; cursor: nwse-resize; }
-
+        /* Puntos de Conexión Estilo Miro */
         .conn-dot {
             position: absolute; width: 18px; height: 18px; background: var(--blue);
-            border-radius: 50%; display: none; cursor: crosshair; z-index: 110;
-            box-shadow: 0 0 15px var(--blue); border: 3px solid #fff;
+            border-radius: 50%; display: none; cursor: crosshair; z-index: 100;
+            box-shadow: 0 0 12px var(--blue); border: 3px solid #fff;
         }
         .element:hover .conn-dot { display: block; }
         .dot-top { top: -30px; left: 50%; transform: translateX(-50%); }
@@ -51,48 +48,56 @@
         .dot-left { left: -30px; top: 50%; transform: translateY(-50%); }
         .dot-right { right: -30px; top: 50%; transform: translateY(-50%); }
 
-        /* Animación de flujo en la línea */
-        @keyframes flow {
-            from { stroke-dashoffset: 100; }
-            to { stroke-dashoffset: 0; }
-        }
+        /* Manejadores de Redimensionado */
+        .handle { position: absolute; width: 10px; height: 10px; background: white; border: 1px solid var(--blue); display: none; z-index: 101; }
+        .element:hover .handle { display: block; }
+        .h-se { bottom: -5px; right: -5px; cursor: nwse-resize; }
+        .h-sw { bottom: -5px; left: -5px; cursor: nesw-resize; }
+        .h-ne { top: -5px; right: -5px; cursor: nesw-resize; }
+        .h-nw { top: -5px; left: -5px; cursor: nwse-resize; }
 
-        .neon-line {
+        /* Flechas SVG con Flujo */
+        .neon-path {
             fill: none;
-            stroke: url(#neonGradient);
+            stroke: var(--blue);
             stroke-width: 3;
-            stroke-linecap: round;
-            filter: url(#glow);
+            filter: drop-shadow(0 0 5px var(--blue));
+            marker-end: url(#arrowhead);
             stroke-dasharray: 10, 5;
             animation: flow 2s linear infinite;
         }
 
+        @keyframes flow {
+            from { stroke-dashoffset: 30; }
+            to { stroke-dashoffset: 0; }
+        }
+
         /* UI Dock */
         .ui-dock {
-            position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%);
-            background: rgba(5, 5, 15, 0.95); padding: 15px 30px;
-            border-radius: 100px; border: 1px solid var(--blue);
-            display: flex; gap: 25px; align-items: center; z-index: 1000;
-            box-shadow: 0 0 30px rgba(0, 210, 255, 0.2);
+            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+            background: rgba(10, 10, 25, 0.9); padding: 12px 25px;
+            border-radius: 50px; border: 1px solid var(--blue);
+            display: flex; gap: 20px; align-items: center; z-index: 1000;
+            box-shadow: 0 0 20px rgba(0, 210, 255, 0.2);
         }
-        .btn { background: none; border: none; color: white; cursor: pointer; font-size: 1.4rem; transition: 0.3s; }
-        .btn:hover { color: var(--blue); transform: scale(1.2); filter: drop-shadow(0 0 8px var(--blue)); }
+        .btn { background: none; border: none; color: white; cursor: pointer; font-size: 1.3rem; transition: 0.2s; }
+        .btn:hover { color: var(--blue); transform: scale(1.1); }
 
-        #svg-layer { position: absolute; inset: 0; pointer-events: none; z-index: 1; }
-        canvas#draw-layer { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
+        #svg-layer { position: absolute; inset: 0; pointer-events: none; z-index: 5; }
+        canvas#draw-layer { position: absolute; inset: 0; z-index: 6; pointer-events: none; }
         canvas#draw-layer.active { pointer-events: all; cursor: crosshair; }
     </style>
 </head>
 <body>
 
     <div class="ui-dock">
-        <span style="color:var(--blue); font-weight:bold; letter-spacing:2px; text-shadow: var(--neon-shadow);">NEON FLOW</span>
-        <button class="btn" onclick="addNode()"><i class="fas fa-project-diagram"></i></button>
-        <button class="btn" onclick="addNote()"><i class="fas fa-sticky-note"></i></button>
-        <button class="btn" id="pen-btn" onclick="toggleDraw()"><i class="fas fa-pen-fancy"></i></button>
+        <span style="color:var(--blue); font-weight:bold; letter-spacing:1px; text-shadow: 0 0 5px var(--blue);">PINK PRO</span>
+        <button class="btn" onclick="addNode()" title="Nuevo Nodo"><i class="fas fa-plus-circle"></i></button>
+        <button class="btn" onclick="addNote()" title="Nota Adhesiva"><i class="fas fa-sticky-note"></i></button>
+        <button class="btn" id="pen-btn" onclick="toggleDraw()"><i class="fas fa-pen-nib"></i></button>
         <input type="color" id="pColor" value="#00d2ff" style="border:none; background:none; width:30px; cursor:pointer;">
         <button class="btn" onclick="document.getElementById('img-in').click()"><i class="fas fa-image"></i></button>
-        <button class="btn" onclick="location.reload()"><i class="fas fa-sync-alt"></i></button>
+        <button class="btn" onclick="location.reload()" title="Limpiar todo"><i class="fas fa-trash-alt"></i></button>
     </div>
 
     <input type="file" id="img-in" hidden accept="image/*">
@@ -102,15 +107,9 @@
             <div class="grid"></div>
             <svg id="svg-layer">
                 <defs>
-                    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-                        <feGaussianBlur stdDeviation="4" result="blur" />
-                        <feComposite in="SourceGraphic" in2="blur" operator="over" />
-                    </filter>
-                    <linearGradient id="neonGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                        <stop offset="0%" style="stop-color:var(--blue);stop-opacity:1" />
-                        <stop offset="50%" style="stop-color:var(--pink);stop-opacity:1" />
-                        <stop offset="100%" style="stop-color:var(--blue);stop-opacity:1" />
-                    </linearGradient>
+                    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                        <polygon points="0 0, 10 3.5, 0 7" fill="var(--blue)" />
+                    </marker>
                 </defs>
             </svg>
             <canvas id="draw-layer"></canvas>
@@ -124,21 +123,21 @@
         const drawCanvas = document.getElementById('draw-layer');
         const ctx = drawCanvas.getContext('2d');
 
-        let scale = 1, posX = -14000, posY = -14000;
+        let scale = 1, posX = -18000, posY = -18000;
         let isPanning = false, isDrawing = false, canDraw = false;
         let connections = [];
 
         function init() {
-            drawCanvas.width = 30000; drawCanvas.height = 30000;
+            drawCanvas.width = 40000; drawCanvas.height = 40000;
             update();
         }
 
-        // --- NAVEGACIÓN ---
+        // --- NAVEGACIÓN (ZOOM CON RUEDA Y PAN) ---
         viewport.onwheel = (e) => {
             e.preventDefault();
             const factor = e.deltaY > 0 ? 0.9 : 1.1;
             const wx = (e.clientX - posX) / scale, wy = (e.clientY - posY) / scale;
-            scale = Math.min(Math.max(0.05, scale * factor), 5);
+            scale = Math.min(Math.max(0.1, scale * factor), 5);
             posX = e.clientX - wx * scale; posY = e.clientY - wy * scale;
             update();
         };
@@ -148,23 +147,25 @@
         window.onmouseup = () => isPanning = false;
         function update() { wrapper.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`; }
 
-        // --- ELEMENTOS ---
+        // --- CREACIÓN Y CONEXIÓN ---
         function addNode() { createEl('node', 'Nodo'); }
-        function addNote() { createEl('note', 'Idea Brillante', 'rgba(255, 0, 255, 0.1)'); }
+        function addNote() { createEl('note', 'Nota', 'rgba(255, 0, 255, 0.1)'); }
 
         function createEl(type, text, bgColor = null) {
             const el = document.createElement('div');
             el.className = 'element';
-            if(bgColor) { el.style.background = bgColor; el.style.borderColor = 'var(--pink)'; el.style.boxShadow = '0 0 15px rgba(255,0,255,0.2)'; }
+            if(bgColor) { el.style.background = bgColor; el.style.borderColor = 'var(--pink)'; }
             el.style.left = (Math.abs(posX) + window.innerWidth/2)/scale + 'px';
             el.style.top = (Math.abs(posY) + window.innerHeight/2)/scale + 'px';
-            el.style.width = '200px'; el.style.height = '100px';
+            el.style.width = '180px'; el.style.height = '80px';
 
             el.innerHTML = `
                 <div class="handle h-nw" data-handle="nw"></div><div class="handle h-ne" data-handle="ne"></div>
                 <div class="handle h-sw" data-handle="sw"></div><div class="handle h-se" data-handle="se"></div>
-                <div class="conn-dot dot-top" onclick="spawn(this, 'n')"></div><div class="conn-dot dot-right" onclick="spawn(this, 'e')"></div>
-                <div class="conn-dot dot-bottom" onclick="spawn(this, 's')"></div><div class="conn-dot dot-left" onclick="spawn(this, 'w')"></div>
+                <div class="conn-dot dot-top" onclick="spawnAndConnect(this, 'n')"></div>
+                <div class="conn-dot dot-right" onclick="spawnAndConnect(this, 'e')"></div>
+                <div class="conn-dot dot-bottom" onclick="spawnAndConnect(this, 's')"></div>
+                <div class="conn-dot dot-left" onclick="spawnAndConnect(this, 'w')"></div>
                 <div class="el-content" contenteditable="true">${text}</div>
             `;
 
@@ -174,36 +175,39 @@
             return el;
         }
 
-        function spawn(dot, dir) {
-            const p = dot.parentElement;
-            let x = parseFloat(p.style.left), y = parseFloat(p.style.top);
+        function spawnAndConnect(dot, dir) {
+            const parent = dot.parentElement;
+            let x = parseFloat(parent.style.left), y = parseFloat(parent.style.top);
             const gap = 350;
             if(dir === 'e') x += gap; else if(dir === 'w') x -= gap;
             else if(dir === 'n') y -= gap; else if(dir === 's') y += gap;
+
             const child = createEl('node', 'Nuevo');
             child.style.left = x + 'px'; child.style.top = y + 'px';
-            connections.push({from: p, to: child});
+            connections.push({ from: parent, to: child });
             updateLines();
         }
 
+        // --- LÓGICA DE MOVIMIENTO LIBRE Y REDIMENSIONADO ---
         function attachDragAndResize(el) {
             el.onmousedown = (e) => {
                 if(document.activeElement === el.querySelector('.el-content') && e.target.classList.contains('el-content')) return;
                 e.stopPropagation();
                 const handle = e.target.dataset.handle;
-                const startX = e.clientX, startY = e.clientY;
-                const startW = el.offsetWidth, startH = el.offsetHeight;
-                const startL = el.offsetLeft, startT = el.offsetTop;
+                const sx = e.clientX, sy = e.clientY;
+                const sw = el.offsetWidth, sh = el.offsetHeight;
+                const sl = el.offsetLeft, st = el.offsetTop;
 
                 const onMove = (me) => {
-                    const dx = (me.clientX - startX) / scale;
-                    const dy = (me.clientY - startY) / scale;
-                    if(!handle) { el.style.left = startL + dx + 'px'; el.style.top = startT + dy + 'px'; }
-                    else {
-                        if(handle.includes('e')) el.style.width = Math.max(80, startW + dx) + 'px';
-                        if(handle.includes('s')) el.style.height = Math.max(50, startH + dy) + 'px';
-                        if(handle.includes('w')) { el.style.width = Math.max(80, startW - dx) + 'px'; el.style.left = startL + dx + 'px'; }
-                        if(handle.includes('n')) { el.style.height = Math.max(50, startH - dy) + 'px'; el.style.top = startT + dy + 'px'; }
+                    const dx = (me.clientX - sx) / scale;
+                    const dy = (me.clientY - sy) / scale;
+                    if(!handle) { 
+                        el.style.left = sl + dx + 'px'; el.style.top = st + dy + 'px'; 
+                    } else {
+                        if(handle.includes('e')) el.style.width = Math.max(50, sw + dx) + 'px';
+                        if(handle.includes('s')) el.style.height = Math.max(40, sh + dy) + 'px';
+                        if(handle.includes('w')) { el.style.width = Math.max(50, sw - dx) + 'px'; el.style.left = sl + dx + 'px'; }
+                        if(handle.includes('n')) { el.style.height = Math.max(40, sh - dy) + 'px'; el.style.top = st + dy + 'px'; }
                     }
                     updateLines();
                 };
@@ -214,22 +218,18 @@
         }
 
         function updateLines() {
-            // Limpiar líneas pero mantener defs
-            const lines = svg.querySelectorAll('.neon-line');
-            lines.forEach(l => l.remove());
+            const existing = svg.querySelectorAll('.neon-path');
+            existing.forEach(l => l.remove());
 
             connections.forEach(c => {
-                if(!c.from.parentElement || !c.to.parentElement) return;
                 const x1 = c.from.offsetLeft + c.from.offsetWidth / 2;
                 const y1 = c.from.offsetTop + c.from.offsetHeight / 2;
                 const x2 = c.to.offsetLeft + c.to.offsetWidth / 2;
                 const y2 = c.to.offsetTop + c.to.offsetHeight / 2;
                 
                 const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-                // Curva de Bézier avanzada
-                const d = `M ${x1} ${y1} C ${(x1+x2)/2} ${y1}, ${(x1+x2)/2} ${y2}, ${x2} ${y2}`;
-                path.setAttribute('d', d);
-                path.setAttribute('class', 'neon-line');
+                path.setAttribute('d', `M ${x1} ${y1} C ${(x1+x2)/2} ${y1}, ${(x1+x2)/2} ${y2}, ${x2} ${y2}`);
+                path.setAttribute('class', 'neon-path');
                 svg.appendChild(path);
             });
         }
@@ -249,8 +249,8 @@
             const reader = new FileReader();
             reader.onload = (f) => {
                 const el = createEl('node', '');
-                el.style.background = 'none'; el.style.border = '1px solid var(--blue)';
-                el.innerHTML += `<img src="${f.target.result}" style="width:100%; height:100%; object-fit:contain; pointer-events:none; border-radius:8px;">`;
+                el.style.background = 'none';
+                el.innerHTML += `<img src="${f.target.result}" style="width:100%; height:100%; object-fit:contain; pointer-events:none;">`;
             };
             reader.readAsDataURL(e.target.files[0]);
         };
