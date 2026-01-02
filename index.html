@@ -7,15 +7,12 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
-            --bg: #030308;
-            --pink: #ff00ff;
-            --blue: #00d2ff;
-            --neon-glow: 0 0 15px rgba(0, 210, 255, 0.6);
+            --bg: #030308; --pink: #ff00ff; --blue: #00d2ff; --neon-glow: 0 0 15px rgba(0, 210, 255, 0.6);
         }
 
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: var(--bg); color: white; font-family: 'Inter', sans-serif; overflow: hidden; }
 
-        /* Lienzo Infinito */
+        /* Lienzo */
         #viewport { width: 100vw; height: 100vh; cursor: grab; background: #050510; }
         #canvas-wrapper { position: absolute; width: 40000px; height: 40000px; transform-origin: 0 0; }
         .grid { position: absolute; inset: 0; background-image: radial-gradient(rgba(0, 210, 255, 0.1) 1px, transparent 1px); background-size: 50px 50px; pointer-events: none; }
@@ -25,79 +22,73 @@
             position: absolute; min-width: 140px; min-height: 70px;
             background: rgba(255, 255, 255, 0.04); backdrop-filter: blur(15px);
             border: 1px solid rgba(0, 210, 255, 0.4); border-radius: 12px;
-            display: flex; align-items: center; justify-content: center;
-            cursor: move; box-shadow: 0 10px 40px rgba(0,0,0,0.8);
-            z-index: 10;
+            display: flex; flex-direction: column; cursor: move; box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+            z-index: 10; padding: 5px;
         }
         .element:hover { border-color: var(--blue); box-shadow: var(--neon-glow); }
+
+        /* Barra de Herramientas del Nodo */
+        .el-toolbar {
+            display: none; position: absolute; top: -45px; left: 50%; transform: translateX(-50%);
+            background: #111; border: 1px solid var(--blue); border-radius: 8px;
+            padding: 5px; gap: 8px; z-index: 100; align-items: center;
+        }
+        .element:hover .el-toolbar { display: flex; }
+        .tool-btn { background: none; border: none; color: white; cursor: pointer; font-size: 12px; padding: 2px 5px; }
+        .tool-btn:hover { color: var(--blue); }
+        .font-size-input { width: 40px; background: #222; border: 1px solid #444; color: white; border-radius: 4px; font-size: 11px; text-align: center; }
+
         .el-content { 
-            padding: 15px; outline: none; text-align: center; font-size: 14px; 
-            width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
-            cursor: text;
+            flex-grow: 1; outline: none; text-align: center; font-size: 14px; 
+            display: flex; align-items: center; justify-content: center; overflow: hidden;
         }
 
-        /* Puntos de Conexión Estilo Miro */
+        /* Puntos de Conexión (Miro Style) */
         .conn-dot {
-            position: absolute; width: 18px; height: 18px; background: var(--blue);
+            position: absolute; width: 14px; height: 14px; background: var(--blue);
             border-radius: 50%; display: none; cursor: crosshair; z-index: 100;
-            box-shadow: 0 0 12px var(--blue); border: 3px solid #fff;
+            box-shadow: 0 0 10px var(--blue); border: 2px solid #fff;
         }
         .element:hover .conn-dot { display: block; }
-        .dot-top { top: -30px; left: 50%; transform: translateX(-50%); }
-        .dot-bottom { bottom: -30px; left: 50%; transform: translateX(-50%); }
-        .dot-left { left: -30px; top: 50%; transform: translateY(-50%); }
-        .dot-right { right: -30px; top: 50%; transform: translateY(-50%); }
+        .dot-top { top: -7px; left: 50%; transform: translateX(-50%); }
+        .dot-bottom { bottom: -7px; left: 50%; transform: translateX(-50%); }
+        .dot-left { left: -7px; top: 50%; transform: translateY(-50%); }
+        .dot-right { right: -7px; top: 50%; transform: translateY(-50%); }
 
-        /* Manejadores de Redimensionado */
-        .handle { position: absolute; width: 10px; height: 10px; background: white; border: 1px solid var(--blue); display: none; z-index: 101; }
+        /* Redimensionado */
+        .handle { position: absolute; width: 8px; height: 8px; background: white; border: 1px solid var(--blue); display: none; z-index: 101; }
         .element:hover .handle { display: block; }
-        .h-se { bottom: -5px; right: -5px; cursor: nwse-resize; }
-        .h-sw { bottom: -5px; left: -5px; cursor: nesw-resize; }
-        .h-ne { top: -5px; right: -5px; cursor: nesw-resize; }
-        .h-nw { top: -5px; left: -5px; cursor: nwse-resize; }
+        .h-se { bottom: -4px; right: -4px; cursor: nwse-resize; }
 
-        /* Flechas SVG con Flujo */
+        /* Flechas SVG */
         .neon-path {
-            fill: none;
-            stroke: var(--blue);
-            stroke-width: 3;
-            filter: drop-shadow(0 0 5px var(--blue));
-            marker-end: url(#arrowhead);
-            stroke-dasharray: 10, 5;
-            animation: flow 2s linear infinite;
+            fill: none; stroke: var(--blue); stroke-width: 3;
+            filter: drop-shadow(0 0 5px var(--blue)); marker-end: url(#arrowhead);
+            stroke-dasharray: 10, 5; animation: flow 2s linear infinite;
+            pointer-events: stroke; cursor: pointer;
         }
+        @keyframes flow { from { stroke-dashoffset: 30; } to { stroke-dashoffset: 0; } }
 
-        @keyframes flow {
-            from { stroke-dashoffset: 30; }
-            to { stroke-dashoffset: 0; }
-        }
-
-        /* UI Dock */
+        /* UI Dock Principal */
         .ui-dock {
             position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
             background: rgba(10, 10, 25, 0.9); padding: 12px 25px;
             border-radius: 50px; border: 1px solid var(--blue);
             display: flex; gap: 20px; align-items: center; z-index: 1000;
-            box-shadow: 0 0 20px rgba(0, 210, 255, 0.2);
         }
         .btn { background: none; border: none; color: white; cursor: pointer; font-size: 1.3rem; transition: 0.2s; }
         .btn:hover { color: var(--blue); transform: scale(1.1); }
 
         #svg-layer { position: absolute; inset: 0; pointer-events: none; z-index: 5; width: 100%; height: 100%; }
-        canvas#draw-layer { position: absolute; inset: 0; z-index: 6; pointer-events: none; }
-        canvas#draw-layer.active { pointer-events: all; cursor: crosshair; }
     </style>
 </head>
 <body>
 
     <div class="ui-dock">
-        <span style="color:var(--blue); font-weight:bold; letter-spacing:1px; text-shadow: 0 0 5px var(--blue);">PINK PRO</span>
+        <span style="color:var(--blue); font-weight:bold; letter-spacing:1px;">PINK PRO FLOW</span>
         <button class="btn" onclick="addNode()" title="Nuevo Nodo"><i class="fas fa-plus-circle"></i></button>
-        <button class="btn" onclick="addNote()" title="Nota Adhesiva"><i class="fas fa-sticky-note"></i></button>
-        <button class="btn" id="pen-btn" onclick="toggleDraw()"><i class="fas fa-pen-nib"></i></button>
-        <input type="color" id="pColor" value="#00d2ff" style="border:none; background:none; width:30px; cursor:pointer;">
         <button class="btn" onclick="document.getElementById('img-in').click()"><i class="fas fa-image"></i></button>
-        <button class="btn" onclick="location.reload()" title="Limpiar todo"><i class="fas fa-trash-alt"></i></button>
+        <button class="btn" onclick="location.reload()"><i class="fas fa-sync"></i></button>
     </div>
 
     <input type="file" id="img-in" hidden accept="image/*">
@@ -112,7 +103,6 @@
                     </marker>
                 </defs>
             </svg>
-            <canvas id="draw-layer"></canvas>
         </div>
     </div>
 
@@ -120,17 +110,12 @@
         const wrapper = document.getElementById('canvas-wrapper');
         const viewport = document.getElementById('viewport');
         const svg = document.getElementById('svg-layer');
-        const drawCanvas = document.getElementById('draw-layer');
-        const ctx = drawCanvas.getContext('2d');
 
         let scale = 1, posX = -18000, posY = -18000;
-        let isPanning = false, isDrawing = false, canDraw = false;
-        let connections = [];
+        let isPanning = false, connections = [];
+        let tempLine = null, activeDot = null;
 
-        function init() {
-            drawCanvas.width = 40000; drawCanvas.height = 40000;
-            update();
-        }
+        function init() { update(); }
 
         // --- NAVEGACIÓN ---
         viewport.onwheel = (e) => {
@@ -142,96 +127,119 @@
             update();
         };
 
-        viewport.onmousedown = (e) => { if(!canDraw && (e.target === viewport || e.target === wrapper)) isPanning = true; };
+        viewport.onmousedown = (e) => { if(e.target === viewport || e.target === wrapper) isPanning = true; };
         window.onmousemove = (e) => { if(isPanning) { posX += e.movementX; posY += e.movementY; update(); } };
         window.onmouseup = () => isPanning = false;
         function update() { wrapper.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`; }
 
-        // --- CREACIÓN Y CONEXIÓN ---
-        function addNode() { createEl('node', 'Nodo'); }
-        function addNote() { createEl('note', 'Nota', 'rgba(255, 0, 255, 0.1)'); }
+        // --- ELEMENTOS ---
+        function addNode() { createEl('node', 'Nuevo'); }
 
-        function createEl(type, text, bgColor = null) {
+        function createEl(type, contentHTML, bg = null) {
             const el = document.createElement('div');
             el.className = 'element';
-            if(bgColor) { el.style.background = bgColor; el.style.borderColor = 'var(--pink)'; }
             el.style.left = (Math.abs(posX) + window.innerWidth/2)/scale + 'px';
             el.style.top = (Math.abs(posY) + window.innerHeight/2)/scale + 'px';
-            el.style.width = '180px'; el.style.height = '80px';
+            el.style.width = '180px'; el.style.height = '100px';
 
             el.innerHTML = `
-                <div class="handle h-nw" data-handle="nw"></div><div class="handle h-ne" data-handle="ne"></div>
-                <div class="handle h-sw" data-handle="sw"></div><div class="handle h-se" data-handle="se"></div>
-                <div class="conn-dot dot-top" onclick="spawnAndConnect(this, 'n')"></div>
-                <div class="conn-dot dot-right" onclick="spawnAndConnect(this, 'e')"></div>
-                <div class="conn-dot dot-bottom" onclick="spawnAndConnect(this, 's')"></div>
-                <div class="conn-dot dot-left" onclick="spawnAndConnect(this, 'w')"></div>
-                <div class="el-content" contenteditable="true">${text}</div>
+                <div class="el-toolbar">
+                    <input type="color" class="tool-btn" oninput="this.closest('.element').style.background=this.value">
+                    <button class="tool-btn" onclick="document.execCommand('bold')"><b>B</b></button>
+                    <input type="number" class="font-size-input" value="14" oninput="this.closest('.element').querySelector('.el-content').style.fontSize=this.value+'px'">
+                    <button class="tool-btn" onclick="this.closest('.element').remove(); updateLines();"><i class="fas fa-trash"></i></button>
+                </div>
+                <div class="conn-dot dot-top" data-pos="t"></div>
+                <div class="conn-dot dot-right" data-pos="r"></div>
+                <div class="conn-dot dot-bottom" data-pos="b"></div>
+                <div class="conn-dot dot-left" data-pos="l"></div>
+                <div class="handle h-se" data-handle="se"></div>
+                <div class="el-content" contenteditable="true">${contentHTML}</div>
             `;
 
             wrapper.appendChild(el);
             attachDragAndResize(el);
-            new ResizeObserver(() => updateLines()).observe(el);
+            attachConnectionLogic(el);
             return el;
         }
 
-        function spawnAndConnect(dot, dir) {
-            const parent = dot.parentElement;
-            let x = parseFloat(parent.style.left), y = parseFloat(parent.style.top);
-            const gap = 350;
-            if(dir === 'e') x += gap; else if(dir === 'w') x -= gap;
-            else if(dir === 'n') y -= gap; else if(dir === 's') y += gap;
-
-            const child = createEl('node', 'Nuevo');
-            child.style.left = x + 'px'; child.style.top = y + 'px';
-            connections.push({ from: parent, to: child });
-            updateLines();
+        // --- LÓGICA DE CONEXIÓN MANUAL ---
+        function attachConnectionLogic(el) {
+            const dots = el.querySelectorAll('.conn-dot');
+            dots.forEach(dot => {
+                dot.onmousedown = (e) => {
+                    e.stopPropagation();
+                    activeDot = dot;
+                    tempLine = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                    tempLine.setAttribute('class', 'neon-path');
+                    svg.appendChild(tempLine);
+                };
+            });
         }
 
-        // --- LÓGICA DE MOVIMIENTO LIBRE Y REDIMENSIONADO ---
+        window.addEventListener('mousemove', (e) => {
+            if (!activeDot) return;
+            const r = wrapper.getBoundingClientRect();
+            const x1 = (activeDot.getBoundingClientRect().left + activeDot.offsetWidth/2 - r.left) / scale;
+            const y1 = (activeDot.getBoundingClientRect().top + activeDot.offsetHeight/2 - r.top) / scale;
+            const x2 = (e.clientX - r.left) / scale;
+            const y2 = (e.clientY - r.top) / scale;
+            tempLine.setAttribute('d', `M ${x1} ${y1} L ${x2} ${y2}`);
+        });
+
+        window.addEventListener('mouseup', (e) => {
+            if (!activeDot) return;
+            const targetEl = e.target.closest('.element');
+            if (targetEl && targetEl !== activeDot.parentElement) {
+                connections.push({ from: activeDot.parentElement, to: targetEl });
+            } else if (e.target === viewport || e.target === wrapper) {
+                // Si sueltas en el vacío, crea un nodo y conéctalo automáticamente
+                const r = wrapper.getBoundingClientRect();
+                const child = createEl('node', 'Nuevo');
+                child.style.left = (e.clientX - r.left)/scale - 90 + 'px';
+                child.style.top = (e.clientY - r.top)/scale - 50 + 'px';
+                connections.push({ from: activeDot.parentElement, to: child });
+            }
+            if (tempLine) tempLine.remove();
+            tempLine = null; activeDot = null;
+            updateLines();
+        });
+
+        // --- DRAG, RESIZE Y MANTENIMIENTO ---
         function attachDragAndResize(el) {
             el.onmousedown = (e) => {
-                if(document.activeElement === el.querySelector('.el-content') && e.target.classList.contains('el-content')) return;
+                if (e.target.closest('.el-toolbar') || e.target.classList.contains('el-content')) return;
                 e.stopPropagation();
                 const handle = e.target.dataset.handle;
                 let sx = e.clientX, sy = e.clientY;
-                const sw = el.offsetWidth, sh = el.offsetHeight;
-                const sl = el.offsetLeft, st = el.offsetTop;
-
-                const onMove = (me) => {
+                
+                const move = (me) => {
                     const dx = (me.clientX - sx) / scale;
                     const dy = (me.clientY - sy) / scale;
-                    if(!handle) { 
-                        el.style.left = (el.offsetLeft + dx) + 'px'; 
-                        el.style.top = (el.offsetTop + dy) + 'px'; 
-                        sx = me.clientX; sy = me.clientY;
+                    if (!handle) {
+                        el.style.left = (el.offsetLeft + dx) + 'px';
+                        el.style.top = (el.offsetTop + dy) + 'px';
                     } else {
-                        const mx = (me.clientX - sx) / scale;
-                        const my = (me.clientY - sy) / scale;
-                        if(handle.includes('e')) el.style.width = Math.max(50, el.offsetWidth + mx) + 'px';
-                        if(handle.includes('s')) el.style.height = Math.max(40, el.offsetHeight + my) + 'px';
-                        if(handle.includes('w')) { el.style.width = Math.max(50, el.offsetWidth - mx) + 'px'; el.style.left = (el.offsetLeft + mx) + 'px'; }
-                        if(handle.includes('n')) { el.style.height = Math.max(40, el.offsetHeight - my) + 'px'; el.style.top = (el.offsetTop + my) + 'px'; }
-                        sx = me.clientX; sy = me.clientY;
+                        el.style.width = Math.max(100, el.offsetWidth + dx) + 'px';
+                        el.style.height = Math.max(50, el.offsetHeight + dy) + 'px';
                     }
+                    sx = me.clientX; sy = me.clientY;
                     updateLines();
                 };
-                const onUp = () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp); };
-                window.addEventListener('mousemove', onMove);
-                window.addEventListener('mouseup', onUp);
+                const up = () => { window.removeEventListener('mousemove', move); };
+                window.addEventListener('mousemove', move);
+                window.addEventListener('mouseup', up);
             };
         }
 
         function updateLines() {
-            const existing = svg.querySelectorAll('.neon-path');
-            existing.forEach(l => l.remove());
-
+            svg.querySelectorAll('.neon-path').forEach(p => p.remove());
+            connections = connections.filter(c => c.from.parentElement && c.to.parentElement);
             connections.forEach(c => {
                 const x1 = c.from.offsetLeft + c.from.offsetWidth / 2;
                 const y1 = c.from.offsetTop + c.from.offsetHeight / 2;
                 const x2 = c.to.offsetLeft + c.to.offsetWidth / 2;
                 const y2 = c.to.offsetTop + c.to.offsetHeight / 2;
-                
                 const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
                 path.setAttribute('d', `M ${x1} ${y1} C ${(x1+x2)/2} ${y1}, ${(x1+x2)/2} ${y2}, ${x2} ${y2}`);
                 path.setAttribute('class', 'neon-path');
@@ -239,23 +247,11 @@
             });
         }
 
-        function toggleDraw() { canDraw = !canDraw; document.getElementById('pen-btn').classList.toggle('active'); drawCanvas.classList.toggle('active'); }
-        drawCanvas.onmousedown = () => { if(!canDraw) return; isDrawing = true; ctx.beginPath(); };
-        drawCanvas.onmousemove = (e) => {
-            if(!isDrawing) return;
-            const r = drawCanvas.getBoundingClientRect();
-            ctx.lineTo((e.clientX - r.left)/scale, (e.clientY - r.top)/scale);
-            ctx.strokeStyle = document.getElementById('pColor').value;
-            ctx.lineWidth = 4 / scale; ctx.lineCap = 'round'; ctx.stroke();
-        };
-        drawCanvas.onmouseup = () => isDrawing = false;
-
         document.getElementById('img-in').onchange = (e) => {
             const reader = new FileReader();
             reader.onload = (f) => {
-                const el = createEl('node', '');
-                el.style.background = 'none';
-                el.innerHTML += `<img src="${f.target.result}" style="width:100%; height:100%; object-fit:contain; pointer-events:none; border-radius:10px;">`;
+                const el = createEl('img', `<img src="${f.target.result}" style="width:100%; height:100%; object-fit:contain; pointer-events:none;">`);
+                el.style.background = 'transparent'; el.style.border = '1px dashed var(--blue)';
             };
             reader.readAsDataURL(e.target.files[0]);
         };
